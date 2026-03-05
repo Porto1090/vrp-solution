@@ -1,11 +1,11 @@
-const BASE = 'http://localhost:8000';
+  const BASE = import.meta.env.VITE_API_BASE_URL;
 
 export async function fetchNodes() {
   const res = await fetch(`${BASE}/nodes`);
   if (!res.ok) throw new Error('Failed nodes');
   return res.json();
 }
-
+  
 export async function fetchStations() {
   const res = await fetch(`${BASE}/stations`);
   if (!res.ok) throw new Error('Failed stations');

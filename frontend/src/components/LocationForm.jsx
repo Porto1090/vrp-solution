@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function LocationForm({ nodes, setNodes, vehicles, setVehicles }) {
   const [geocodeErrors, setGeocodeErrors] = useState({});
@@ -29,7 +30,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
     try {
       const res = await fetch(
-        `http://localhost:8000/geocode?q=${encodeURIComponent(address)}`
+        `${API_BASE_URL}/geocode?q=${encodeURIComponent(address)}`
       );
   
       const data = await res.json();
