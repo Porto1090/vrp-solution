@@ -1,0 +1,2 @@
+ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImExYTc4Y2Y5ZjExYjQyMTQ4MWQ4ZjkwODFjMWMzNjY2IiwiaCI6Im11cm11cjY0In0="
+ORS_BASE_URL = "https://api.openrouteservice.org"
