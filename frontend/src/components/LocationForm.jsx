@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function LocationForm({ nodes, setNodes, vehicles, setVehicles }) {
   const [geocodeErrors, setGeocodeErrors] = useState({});
+  const [locationSpecs, setLocationSpecs] = useState({
+    city: "Boston",
+    country: "United States"
+  });
+
   const emptyNode = {
-    id: uuidv4(),
     name: "",
     address: "",
     lat: "",
@@ -15,13 +19,28 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
   const emptyVehicle = {
     id: uuidv4(),
     name: "",
-    capacity: 1,
+    capacity: 10,
     fixed_cost: 50,
-    cost_factor: 1
   };
 
-  const [nodeRows, setNodeRows] = useState([emptyNode]);
-  const [vehicleRows, setVehicleRows] = useState([emptyVehicle]);
+  const [nodeRows, setNodeRows] = useState([
+    { ...emptyNode, name: "Depot" }
+  ]);
+  const [vehicleRows, setVehicleRows] = useState([
+    { ...emptyVehicle, name: "Vehicle 1" }
+  ]);
+
+  useEffect(() => {
+    if (nodes && nodes.length > 0) {
+      setNodeRows(nodes);
+    }
+  }, [nodes]);
+
+  useEffect(() => {
+    if (vehicles && vehicles.length > 0) {
+      setVehicleRows(vehicles);
+    }
+  }, [vehicles]);
 
   const geocodeAddress = async (index) => {
     const address = nodeRows[index].address;
@@ -30,7 +49,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
     try {
       const res = await fetch(
-        `${API_BASE_URL}/geocode?q=${encodeURIComponent(address)}`
+        `${API_BASE_URL}/geocode?q=${encodeURIComponent(address)} ${encodeURIComponent(locationSpecs.city)} ${encodeURIComponent(locationSpecs.country)}`
       );
   
       const data = await res.json();
@@ -61,7 +80,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
         [index]: "Error fetching geocode data"
       }));
     }
-
+  
     saveScenario();
   };
 
@@ -78,19 +97,19 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
   };
 
   const addNodeRow = () => {
-    setNodeRows([...nodeRows, { ...emptyNode }]);
+    setNodeRows([...nodeRows, { ...emptyNode, name: `Customer ${nodeRows.length}` }]);
   };
 
   const addVehicleRow = () => {
-    setVehicleRows([...vehicleRows, { ...emptyVehicle }]);
+    setVehicleRows([...vehicleRows, { ...emptyVehicle, name: `Vehicle ${vehicleRows.length + 1}` }]);
   };
 
   const saveScenario = () => {
     const preparedNodes = nodeRows
       .filter(n => n.lat && n.lng)
       .map((n, i) => ({
-        id: uuidv4(),
         ...n,
+        id: i === 0 ? "0" : uuidv4(),
         lat: parseFloat(n.lat),
         lng: parseFloat(n.lng)
       }));
@@ -101,7 +120,48 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
   return (
     <div className="space-y-8">
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+        <div className="mb-3">
+          <h3 className="text-sm font-bold text-gray-700 flex items-center">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-4 w-4 mr-1 text-blue-500" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Filtros de Búsqueda (Geocoding)
+          </h3>
+          <p className="text-xs text-gray-500">Mejora la precisión de las coordenadas limitando la búsqueda.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col">
+            <label className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
+              Ciudad
+            </label>
+            <input
+              value={locationSpecs.city}
+              onChange={(e) => setLocationSpecs({ ...locationSpecs, city: e.target.value })}
+              className="border border-gray-300 rounded-md p-2.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+              placeholder="City"
+            />
+          </div>
 
+          <div className="flex flex-col">
+            <label className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
+              País
+            </label>
+            <input
+              value={locationSpecs.country}
+              onChange={(e) => setLocationSpecs({ ...locationSpecs, country: e.target.value })}
+              className="border border-gray-300 rounded-md p-2.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+              placeholder="Country"
+            />
+          </div>
+        </div>
+      </div>
       <div>
         <h2 className="text-lg font-semibold mb-3">NODES TO VISIT</h2>
         {nodes.length <= 1 &&

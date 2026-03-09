@@ -1,12 +1,5 @@
 import React from 'react';
-import { useState }  from 'react';
-export default function RouteStats({ routeData }) {
-  const [remainDistance, setRemainDistance] = useState(0);
-  const [remainDuration, setRemainDuration] = useState(0);
-
-  console.log('RouteStats received props:', routeData);
-  const routes = routeData?.routes || [];
-
+export default function RouteStats({ routes }) {
   function formatDuration(seconds) {
     if (!seconds) return "0 minutes";
     const hrs = Math.floor(seconds / 3600);
@@ -18,19 +11,13 @@ export default function RouteStats({ routeData }) {
   function distributeWithRandomFactor(total, parts, variation = 0.2) {
     if (parts <= 0) return [];
 
-    // 1. Generamos pesos base con pequeña variación
     const weights = Array.from({ length: parts }, () => {
-      const randomFactor = 1 + (Math.random() * variation * 2 - variation);
-      return randomFactor;
+      return 1 + (Math.random() * variation * 2 - variation);
     });
 
-    // 2. Sumamos pesos
     const weightSum = weights.reduce((a, b) => a + b, 0);
-
-    // 3. Normalizamos y multiplicamos por el total
     let distributed = weights.map(w => (w / weightSum) * total);
 
-    // 4. Ajustamos el último para evitar error de flotantes
     const sumWithoutLast = distributed.slice(0, -1).reduce((a, b) => a + b, 0);
     distributed[distributed.length - 1] = total - sumWithoutLast;
 
@@ -54,23 +41,26 @@ export default function RouteStats({ routeData }) {
         const totalWalkingDur = route.walking_routes?.reduce((acc, curr) => acc + curr.duration, 0) || 0;
         const drivingTotalDistance = route.driving_route?.distance || 0;
         const drivingTotalDuration = route.driving_route?.duration || 0;
+        console.log("Calculating stats for route:", route.driving_route?.duration);
         const stopsCount = route.stops.length;
+        const segmentCount = Math.max(0, stopsCount - 1);
 
         const fakeDistances = distributeWithRandomFactor(
           drivingTotalDistance,
-          stopsCount,
+          segmentCount,
           0.25
         );
 
         const fakeDurations = distributeWithRandomFactor(
           drivingTotalDuration,
-          stopsCount,
+          segmentCount,
           0.25
         );
 
         return (
-          <div key={`stats-${route.vehicle_id}`} className="mt-4 p-4 border rounded-lg shadow-sm bg-white">
-            <h3 className="font-bold text-md mb-3 border-b pb-2">Vehicle ID: {route.vehicle_id}</h3>
+          <div key={`stats-${route.vehicle.id}`} className="mt-4 p-4 border rounded-lg shadow-sm bg-white">
+            <h2 className="font-bold text-lg">{route.vehicle.name}</h2>
+            <h3 className="font-semibold text-gray-700 text-sm mb-3 border-b pb-2">Vehicle ID: {route.vehicle.id}</h3>
             
             {/* Tarjetas de resumen: Conducción vs Caminata */}
             <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
@@ -79,7 +69,7 @@ export default function RouteStats({ routeData }) {
                 <p><strong>Total Dist:</strong> {(route.driving_route?.distance / 1000).toFixed(2)} km</p>
                 <p><strong>Total Time:</strong> {formatDuration(route.driving_route?.duration)}</p>
               </div>
-              { totalWalkingDist > 0 ? (
+              {totalWalkingDist > 0 ? (
                 <div className="p-3 rounded border">
                   <p className="font-semibold mb-1">Walking</p>
                   <p><strong>Total Dist:</strong> {(totalWalkingDist / 1000).toFixed(2)} km</p>
@@ -101,9 +91,13 @@ export default function RouteStats({ routeData }) {
               <tbody>
                 {/* 2. Iteramos directamente sobre vehicle.stops */}
                 {route.stops.map((stop, idx) => {
-                  const isDepot = stop.id === 0;
-                  const isHub = stop.name?.toLowerCase().includes('station');
+                  const isFirstDepot = idx === 0;
+                  const isDepot = stop.id === 0 || stop.id === "0";
+                  const isHub = stop.name?.toLowerCase().includes('parking') || stop.name?.toLowerCase().includes('hub');
                   const hubWalkingRoutes = route.walking_routes?.filter(wr => wr.station_id === stop.id) || [];
+
+                  const segmentDistance = isFirstDepot ? 0 : fakeDistances[idx - 1];
+                  const segmentDuration = isFirstDepot ? 0 : fakeDurations[idx - 1];
 
                   return (
                     <React.Fragment key={`stop-group-${idx}-${stop.id}`}>
@@ -122,8 +116,8 @@ export default function RouteStats({ routeData }) {
                         </td>
                         {/* <td className="border border-gray-300 px-2 py-1">{isDepot && idx === 0 ? '0 km' : (stop.distance ? `${(stop.distance / 1000).toFixed(2)} km` : 'No distance')}</td>
                         <td className="border border-gray-300 px-2 py-1">{isDepot && idx === 0 ? '0 minutes' : (stop.duration ? formatDuration(stop.duration) : 'No duration')}</td> */}
-                        <td className="border border-gray-300 px-2 py-1">{isDepot && idx === 0 ? '0 km' : `${(fakeDistances[idx] / 1000).toFixed(2)} km`}</td>
-                        <td className="border border-gray-300 px-2 py-1">{isDepot && idx === 0 ? '0 minutes' : formatDuration(fakeDurations[idx])}</td>
+                        <td className="border border-gray-300 px-2 py-1">{isDepot && idx === 0 ? '0 km' : `${(segmentDistance / 1000).toFixed(2)} km`}</td>
+                        <td className="border border-gray-300 px-2 py-1">{isDepot && idx === 0 ? '0 minutes' : formatDuration(segmentDuration)}</td>
                       </tr>
 
                       {/* 2. FILAS SECUNDARIAS: Caminatas individuales desde este Hub */}

@@ -17,9 +17,9 @@ class Station(BaseModel):
     
 class Vehicle(BaseModel):
     id: str
+    name: str
     capacity: int
     fixed_cost: int
-    cost_factor: float
     
 class VRPRequest(BaseModel):
     nodes: List[Node]

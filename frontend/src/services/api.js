@@ -46,7 +46,10 @@ export async function fetchSegmentRoute(data) {
     body: JSON.stringify(data)
   });
 
-  if (!res.ok) throw new Error('Failed to optimize routes');
+  if (!res.ok){
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Failed to calculate routes.");
+  }
   
   return await res.json();
 }

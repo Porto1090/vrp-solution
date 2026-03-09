@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchNodes, fetchStations, fetchVehicles, fetchSegmentRoute } from './services/api';
 import MapView from './components/MapView';
 import RouteStats from './components/RouteStats';
@@ -7,18 +7,45 @@ import LocationForm from './components/LocationForm';
 function App() {
   const [nodes, setNodes] = useState([]);
   const [vehicles, setVehicles] = useState([]);
-  const [stations] = useState([]);
+  const [stations, setStations] = useState([]);
 
   const [routeData, setRouteData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const drawRoute = async () => {
-    // console.log("Nodes:", nodes);
-    // console.log("Vehicles:", vehicles);
-    // console.log("Stations:", stations);
+  useEffect(() => {
+    const loadData = async () => {
+      fetchNodes().then(setNodes);
+      fetchStations().then(setStations);
+      fetchVehicles().then(setVehicles);
+    };
+    loadData();
+  }, []);
 
+  const drawRoute = async () => {
     if (nodes.length < 2) {
-      alert("Need at least depot + 1 node");
+      alert("Please add at least one Depot and one Customer node.");
+      return;
+    }
+    if (vehicles.length === 0) {
+      alert("Please add at least one Vehicle.");
+      return;
+    }
+
+    const hasIncompleteNodes = nodes.some(
+      n => !n.name?.trim() || !n.address?.trim() || !n.lat || !n.lng
+    );
+    
+    if (hasIncompleteNodes) {
+      alert("Incomplete Nodes: Please ensure all nodes have a Name, Address, and have been geocoded (Lat/Lng).");
+      return;
+    }
+
+    const hasIncompleteVehicles = vehicles.some(
+      v => !v.name?.trim() || v.capacity == null || v.capacity <= 0 || v.fixed_cost == null
+    );
+
+    if (hasIncompleteVehicles) {
+      alert("Incomplete Vehicles: Please ensure all vehicles have a Name and a valid Capacity/Fixed Cost.");
       return;
     }
 
@@ -29,6 +56,7 @@ function App() {
       setRouteData(routes);
     } catch (err) {
       console.error("Route optimization failed:", err);
+      alert("Failed to calculate routes. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -39,29 +67,29 @@ function App() {
       {/* LEFT PANEL */}
       <div className="border p-4 overflow-y-auto">
         <h1 className="text-2xl font-bold mb-4">
-          VRP Research Tool
+          VRP - Park and Loop Tool
         </h1>
         {!routeData ? (
         <>
-          <LocationForm
-            nodes={nodes}
-            setNodes={setNodes}
-            vehicles={vehicles}
-            setVehicles={setVehicles}
-          />
+          {!loading && (
+            <LocationForm
+              nodes={nodes}
+              setNodes={setNodes}
+              vehicles={vehicles}
+              setVehicles={setVehicles}
+            />
+          )}
           <button
             onClick={drawRoute}
             disabled={loading || nodes.length < 2 || vehicles.length === 0}
             className="mt-4 w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {loading ? "Optimizing..." : "Optimize Routes"}
+            {loading ? "Calculating..." : "Calculate Routes"}
           </button>
         </>
         ) : routeData.routes.length > 0 ? (
           <RouteStats
-            nodes={nodes}
-            stations={stations}
-            routeData={routeData}
+            routes={routeData?.routes || []}
           />
         ) : (
           <div className="mt-4 p-3 rounded border-l-4 border-red-400 bg-red-50 text-red-800">
@@ -76,9 +104,9 @@ function App() {
       {/* MAP */}
       <div className="flex-1">
         <MapView
-          nodes={nodes}
+          nodes={routeData?.nodes || nodes}
           stations={stations}
-          routeData={routeData}
+          routes={routeData?.routes || []}
           setNodes={setNodes}
         />
       </div>
