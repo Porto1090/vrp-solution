@@ -3,18 +3,23 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, CircleMarker 
 import MapController from "./MapController";
 import 'leaflet/dist/leaflet.css';
 
+import L from 'leaflet';
+import parkingIconUrl from '/parking.png';
+import warehouseIconUrl from '/warehouse.png';
+import deliveryIconUrl from '/delivery.png';
+
 const stationIcon = new L.Icon({
-  iconUrl: '/parking.png',
+  iconUrl: parkingIconUrl,
   iconSize: [25, 25],
 });
 
 const hubIcon = new L.Icon({
-  iconUrl: '/warehouse.png',
+  iconUrl: warehouseIconUrl,
   iconSize: [35, 35],
 });
 
 const deliveryIcon = new L.Icon({
-  iconUrl: '/delivery.png',
+  iconUrl: deliveryIconUrl,
   iconSize: [35, 35],
 });
 
