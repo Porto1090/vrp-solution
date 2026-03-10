@@ -4,22 +4,19 @@ import MapController from "./MapController";
 import 'leaflet/dist/leaflet.css';
 
 import L from 'leaflet';
-import parkingImg from '../assets/parking.png';
-import warehouseImg from '../assets/warehouse.png';
-import deliveryImg from '../assets/delivery.png';
 
 const stationIcon = new L.Icon({
-  iconUrl: parkingImg,
+  iconUrl: "/images/parking.png",
   iconSize: [25, 25],
 });
 
 const hubIcon = new L.Icon({
-  iconUrl: warehouseImg,
+  iconUrl: "/images/warehouse.png",
   iconSize: [35, 35],
 });
 
 const deliveryIcon = new L.Icon({
-  iconUrl: deliveryImg,
+  iconUrl: "/images/delivery.png",
   iconSize: [35, 35],
 });
 
