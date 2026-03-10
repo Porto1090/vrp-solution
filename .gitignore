@@ -2,7 +2,6 @@ keys.py
 __pycache__/
 
 yolov8n.pt
-*.png
 data/
 test_images/
 output/
