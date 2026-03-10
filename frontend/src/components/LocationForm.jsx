@@ -10,17 +10,11 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
   });
 
   const emptyNode = {
-    name: "",
-    address: "",
-    lat: "",
-    lng: ""
+    name: "", address: "", lat: "", lng: ""
   };
 
   const emptyVehicle = {
-    id: uuidv4(),
-    name: "",
-    capacity: 10,
-    fixed_cost: 50,
+    id: uuidv4(), name: "", capacity: 10, fixed_cost: 50,
   };
 
   const [nodeRows, setNodeRows] = useState([
@@ -49,7 +43,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
     try {
       const res = await fetch(
-        `${API_BASE_URL}/geocode?q=${encodeURIComponent(address)} ${encodeURIComponent(locationSpecs.city)} ${encodeURIComponent(locationSpecs.country)}`
+        `${API_BASE_URL}/geocode?q=${encodeURIComponent(address)} ${encodeURIComponent(locationSpecs?.city)} ${encodeURIComponent(locationSpecs?.country)}`
       );
   
       const data = await res.json();
@@ -68,7 +62,6 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
           return copy;
         });
       } else {
-        // no se encontró
         setGeocodeErrors((prev) => ({
           ...prev,
           [index]: "No results found for this address"
@@ -87,6 +80,17 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
   const updateNode = (index, field, value) => {
     const updated = [...nodeRows];
     updated[index][field] = value;
+
+    if (field === "address") {
+      updated[index].lat = "";
+      updated[index].lng = "";
+      setGeocodeErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[index];
+        return copy;
+      });
+    }
+
     setNodeRows(updated);
   };
 
@@ -102,6 +106,15 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
   const addVehicleRow = () => {
     setVehicleRows([...vehicleRows, { ...emptyVehicle, name: `Vehicle ${vehicleRows.length + 1}` }]);
+  };
+
+  const removeNode = (index) => {
+    if (index === 0) return;
+    setNodeRows(nodeRows.filter((_, i) => i !== index));
+  };
+
+  const removeVehicle = (index) => {
+    setVehicleRows(vehicleRows.filter((_, i) => i !== index));
   };
 
   const saveScenario = () => {
@@ -120,195 +133,168 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
   return (
     <div className="space-y-8">
-      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-        <div className="mb-3">
-          <h3 className="text-sm font-bold text-gray-700 flex items-center">
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-4 w-4 mr-1 text-blue-500" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            Filtros de Búsqueda (Geocoding)
-          </h3>
-          <p className="text-xs text-gray-500">Mejora la precisión de las coordenadas limitando la búsqueda.</p>
+      {/* SECCIÓN DE NODOS */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-lg font-bold text-gray-800 uppercase tracking-wide">Nodes to Visit</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col">
-            <label className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
-              Ciudad
-            </label>
-            <input
-              value={locationSpecs.city}
-              onChange={(e) => setLocationSpecs({ ...locationSpecs, city: e.target.value })}
-              className="border border-gray-300 rounded-md p-2.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-              placeholder="City"
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
-              País
-            </label>
-            <input
-              value={locationSpecs.country}
-              onChange={(e) => setLocationSpecs({ ...locationSpecs, country: e.target.value })}
-              className="border border-gray-300 rounded-md p-2.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-              placeholder="Country"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <h2 className="text-lg font-semibold mb-3">NODES TO VISIT</h2>
+        
         {nodes.length <= 1 &&
-          <div
-            role="note"
-            className="mb-4 p-3 rounded border-l-4 border-yellow-400 bg-yellow-50 text-yellow-800 flex items-start space-x-3"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-6 h-6 flex-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
-            </svg>
-
-            <div>
-              <p className="font-semibold">Note</p>
-              <p className="text-sm">
-                The first node is considered the depot. Please ensure there are at least two distinct nodes, and consider clicking "Search" to geocode each address and retrieve lat/lng to the map.
-              </p>
-            </div>
+          <div className="mb-4 p-3 rounded-md border-l-4 border-yellow-400 bg-yellow-50 text-yellow-800 flex items-start space-x-3 text-sm">
+             <p><strong>Note:</strong> The first node is the depot. Add at least 2 nodes and click "Search" to geocode.</p>
           </div>
         }
 
-        <table className="w-full border">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="w-1/3">Name</th>
-              <th className="w-1/2">Address</th>
-              <th className="w-1/8"></th>
-              <th className="w-1/6"></th>
-            </tr>
-          </thead>
+        {/* SECCIÓN DE BÚSQUEDA / FILTROS */}
+        <div className="flex flex-col gap-3 bg-gray-50 p-3 rounded-md border border-gray-100">
+          <span className="text-xs font-bold uppercase text-gray-500">Filtros de Búsqueda (Geocoding)</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col">
+              <label className="block text-xs text-gray-500 mb-1">
+                City
+              </label>
+              <input
+                value={locationSpecs.city}
+                onChange={(e) => setLocationSpecs({ ...locationSpecs, city: e.target.value })}
+                className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                placeholder="City"
+              />
+            </div>
 
-          <tbody>
-            {nodeRows.map((row, i) => (
-              <tr key={i} className="border-t">
+            <div className="flex flex-col">
+              <label className="block text-xs text-gray-500 mb-1">
+                Country
+              </label>
+              <input
+                value={locationSpecs.country}
+                onChange={(e) => setLocationSpecs({ ...locationSpecs, country: e.target.value })}
+                className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                placeholder="Country"
+              />
+            </div>
+          </div>
+        </div>
 
-                <td className="p-1">
-                  <input
-                    value={row.name}
-                    onChange={(e)=>updateNode(i,"name",e.target.value)}
-                    className="border p-2 w-full"
-                    placeholder={i === 0 ? "Depot Name" : `Customer Name`}
-                  />
-                </td>
-
-                <td className="p-1">
-                  <input
-                    value={row.address}
-                    onChange={(e)=>updateNode(i,"address",e.target.value)}
-                    className="border p-2 w-full"
-                    placeholder="MIT Center for Transportation & Logistics, Cambridge, MA"
-                  />
-                </td>
-
-                <td className="p-1">
-                  <button
-                    onClick={()=>geocodeAddress(i)}
-                    className="bg-blue-500 text-white px-2 py-1 rounded"
-                  >
-                    Search
+        <div className="space-y-4">
+          {nodeRows.map((row, i) => (
+            <div key={i} className={`bg-white border border-gray-200 rounded-lg p-4 shadow-sm ${i === 0 ? 'border-l-4 border-l-blue-500' : ''}`}>
+            
+              <div className="flex justify-between items-center mb-3">
+                <span className={`text-xs font-bold uppercase ${i === 0 ? 'text-blue-600' : 'text-gray-500'}`}>
+                  {i === 0 ? '📍 Start Point (Depot)' : `👤 Customer ${i}`}
+                </span>
+                {i !== 0 && (
+                  <button onClick={() => removeNode(i)} className="text-red-400 hover:text-red-600 p-1" title="Remove Node">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
                   </button>
-                    {geocodeErrors[i] && (
-                      <p className="text-sm text-red-600 mt-1">{geocodeErrors[i]}</p>
-                    )}
-                </td>
+                )}
+              </div>
 
-                <td className="p-1">
-                  <div className="pl-2 text-sm">
-                  Latitud: {row.lat || "N/A"} <br/>
-                  Longitud: {row.lng || "N/A"}
+              <div className="flex flex-col space-between gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Name</label>
+                    <input
+                      value={row.name}
+                      onChange={(e)=>updateNode(i,"name",e.target.value)}
+                      className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder={i === 0 ? "Depot Name" : "Customer Name"}
+                    />
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Address</label>
+                    <input
+                      value={row.address}
+                      onChange={(e)=>updateNode(i,"address",e.target.value)}
+                      className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="MIT Center for Transportation & Logistics"
+                    />
+                  </div>
+                </div>
 
-        <button
-          onClick={addNodeRow}
-          className="mt-2 bg-gray-700 text-white px-3 py-1 rounded"
-        >
-          Add Node
-        </button>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 bg-gray-50 p-3 rounded-md border border-gray-100">
+                  <div className="flex flex-col items-center md:flex-row gap-2 align-middle">
+                    <button onClick={()=>geocodeAddress(i)} className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-2 py-2 rounded-md shadow-sm transition-colors">
+                      Search Coordinates
+                    </button>
+                  </div>
+                  {geocodeErrors[i] ? 
+                    <p className="text-xs text-red-600 text-center">{geocodeErrors[i]}</p> 
+                    :
+                    <div className="text-xs text-gray-600 font-mono text-center sm:text-right">
+                      <div>Lat: <span className="font-semibold text-gray-800">{row.lat ? Number(row.lat).toFixed(5) : "Pending"}</span></div>
+                      <div>Lng: <span className="font-semibold text-gray-800">{row.lng ? Number(row.lng).toFixed(5) : "Pending"}</span></div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          ))}
+          <button onClick={addNodeRow} className="bg-gray-800 hover:bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-sm transition-colors flex items-center justify-center w-full">
+            + Add Node
+          </button>
+        </div>
       </div>
+      
+      {/* SECCIÓN DE VEHÍCULOS */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-lg font-bold text-gray-800 uppercase tracking-wide">Vehicles</h2>
+        </div>
 
+        <div className="space-y-4">
+          {vehicleRows.map((row,i)=>(
+            <div key={i} className="relative bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:border-blue-300 transition-colors">
+              
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-xs font-bold text-gray-500 uppercase">🚚 Vehicle {i + 1}</span>
+                {vehicleRows.length > 1 && (
+                  <button onClick={() => removeVehicle(i)} className="text-red-400 hover:text-red-600 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                  </button>
+                )}
+              </div>
 
-      <div>
-        <h2 className="text-lg font-semibold mb-3">VEHICLES</h2>
-
-        <table className="w-full border">
-
-          <thead className="bg-gray-100">
-            <tr>
-              <th>Name</th>
-              <th>Capacity</th>
-              <th>Fixed Cost</th>
-              {/* <th>Cost Factor</th> */}
-            </tr>
-          </thead>
-
-          <tbody>
-            {vehicleRows.map((row,i)=>(
-              <tr key={i} className="border-t">
-                <td className="p-1">
+              <div className="flex flex-col space-between gap-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Name</label>
                   <input
                     value={row.name}
                     onChange={(e)=>updateVehicle(i,"name",e.target.value)}
-                    className="border p-2 w-full"
-                    placeholder="Vehicle Name"
+                    className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="e.g. Ford Transit"
                   />
-                </td>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Capacity</label>
+                    <input
+                      type="number"
+                      value={row.capacity}
+                      onChange={(e)=>updateVehicle(i,"capacity",e.target.value)}
+                      className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Fixed Cost</label>
+                    <input
+                      type="number"
+                      value={row.fixed_cost}
+                      onChange={(e)=>updateVehicle(i,"fixed_cost",e.target.value)}
+                      className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
 
-                <td className="p-1">
-                  <input
-                    type="number"
-                    value={row.capacity}
-                    onChange={(e)=>updateVehicle(i,"capacity",e.target.value)}
-                    className="border p-2 w-full"
-                  />
-                </td>
-
-                <td className="p-1">
-                  <input
-                    type="number"
-                    value={row.fixed_cost}
-                    onChange={(e)=>updateVehicle(i,"fixed_cost",e.target.value)}
-                    className="border p-2 w-full"
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-
-        </table>
-
-        <button
-          onClick={addVehicleRow}
-          className="mt-2 bg-gray-700 text-white px-3 py-1 rounded"
-        >
-          Add Vehicle
+            </div>
+          ))}
+        </div>
+        <button onClick={addVehicleRow} className="bg-gray-800 hover:bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-sm transition-colors flex items-center justify-center w-full">
+          + Add Vehicle
         </button>
-
       </div>
     </div>
   );

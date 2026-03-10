@@ -82,7 +82,7 @@ function App() {
           <button
             onClick={drawRoute}
             disabled={loading || nodes.length < 2 || vehicles.length === 0}
-            className="mt-4 w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="mt-8 w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {loading ? "Calculating..." : "Calculate Routes"}
           </button>
@@ -111,16 +111,19 @@ function App() {
         />
       </div>
 
-      <div className="mt-8 p-4 border-t border-gray-200 text-sm text-gray-600 text-left">
-        <p>
-          Developed by <strong>Camilo A. Mora-Quiñones</strong> &mdash;{" "}
+      <div className="mt-4 p-4 border-t border-gray-200 text-sm text-gray-600 text-left">
+        <p className="mb-2">
+          Developed by:
+        </p>
+          <p>
+            <strong>Camilo A. Mora-Quiñones</strong> &mdash;{" "}
           <a href="mailto:camimora@mit.edu" className="underline hover:text-gray-800">
             camimora@mit.edu
           </a>
-        </p>
-        <p>
-          Developed by <strong>Eduardo Porto Morales</strong>
-        </p>
+          </p>
+          <p>
+            <strong>Eduardo Agustín Porto Morales</strong>
+          </p>
       </div>
     </div>
   )
