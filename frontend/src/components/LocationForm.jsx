@@ -14,7 +14,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
   };
 
   const emptyVehicle = {
-    id: uuidv4(), name: "", capacity: 10, fixed_cost: 50,
+    id: uuidv4(), name: "", capacity: 10, fixed_cost: 50
   };
 
   const [nodeRows, setNodeRows] = useState([
@@ -147,12 +147,10 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
         {/* SECCIÓN DE BÚSQUEDA / FILTROS */}
         <div className="flex flex-col gap-3 bg-gray-50 p-3 rounded-md border border-gray-100">
-          <span className="text-xs font-bold uppercase text-gray-500">Filtros de Búsqueda (Geocoding)</span>
+          <span className="text-xs font-bold uppercase text-gray-500">Search Filters (Geocoding)</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col">
-              <label className="block text-xs text-gray-500 mb-1">
-                City
-              </label>
+              <label className="block text-xs text-gray-500 mb-1">City</label>
               <input
                 value={locationSpecs.city}
                 onChange={(e) => setLocationSpecs({ ...locationSpecs, city: e.target.value })}
@@ -162,9 +160,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
             </div>
 
             <div className="flex flex-col">
-              <label className="block text-xs text-gray-500 mb-1">
-                Country
-              </label>
+              <label className="block text-xs text-gray-500 mb-1">Country</label>
               <input
                 value={locationSpecs.country}
                 onChange={(e) => setLocationSpecs({ ...locationSpecs, country: e.target.value })}
@@ -177,7 +173,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
         <div className="space-y-4">
           {nodeRows.map((row, i) => (
-            <div key={i} className={`bg-white border border-gray-200 rounded-lg p-4 shadow-sm ${i === 0 ? 'border-l-4 border-l-blue-500' : ''}`}>
+            <div key={i} className={`bg-white border border-gray-200 rounded-lg p-4 shadow-sm transition-all ${i === 0 ? 'border-l-4 border-l-blue-500' : ''}`}>
             
               <div className="flex justify-between items-center mb-3">
                 <span className={`text-xs font-bold uppercase ${i === 0 ? 'text-blue-600' : 'text-gray-500'}`}>
@@ -215,15 +211,31 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
                 </div>
 
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 bg-gray-50 p-3 rounded-md border border-gray-100">
-                  <div className="flex flex-col items-center md:flex-row gap-2 align-middle">
-                    <button onClick={()=>geocodeAddress(i)} className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-2 py-2 rounded-md shadow-sm transition-colors">
-                      Search Coordinates
-                    </button>
+                  <div className="flex flex-col items-center md:flex-row gap-2 align-middle w-full md:w-auto">
+                    
+                    {/* LÓGICA DEL BOTÓN: Ocultarlo si ya hay coordenadas */}
+                    {(!row.lat || !row.lng) ? (
+                      <button 
+                        onClick={()=>geocodeAddress(i)} 
+                        className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-md shadow-sm transition-colors"
+                      >
+                        Search Coordinates
+                      </button>
+                    ) : (
+                      <div className="w-full md:w-auto bg-green-50 text-green-700 border border-green-200 text-sm font-medium px-4 py-2 rounded-md flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Geocoded
+                      </div>
+                    )}
+
                   </div>
+                  
                   {geocodeErrors[i] ? 
-                    <p className="text-xs text-red-600 text-center">{geocodeErrors[i]}</p> 
+                    <p className="text-xs text-red-600 text-center w-full md:w-auto">{geocodeErrors[i]}</p> 
                     :
-                    <div className="text-xs text-gray-600 font-mono text-center sm:text-right">
+                    <div className="text-xs text-gray-600 font-mono text-center sm:text-right w-full md:w-auto">
                       <div>Lat: <span className="font-semibold text-gray-800">{row.lat ? Number(row.lat).toFixed(5) : "Pending"}</span></div>
                       <div>Lng: <span className="font-semibold text-gray-800">{row.lng ? Number(row.lng).toFixed(5) : "Pending"}</span></div>
                     </div>
@@ -232,7 +244,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
               </div>
             </div>
           ))}
-          <button onClick={addNodeRow} className="bg-gray-800 hover:bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-sm transition-colors flex items-center justify-center w-full">
+          <button onClick={addNodeRow} className="bg-gray-800 hover:bg-gray-900 text-white text-xs font-medium px-3 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center w-full">
             + Add Node
           </button>
         </div>
@@ -292,7 +304,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
             </div>
           ))}
         </div>
-        <button onClick={addVehicleRow} className="bg-gray-800 hover:bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-sm transition-colors flex items-center justify-center w-full">
+        <button onClick={addVehicleRow} className="bg-gray-800 hover:bg-gray-900 text-white text-xs font-medium px-3 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center w-full">
           + Add Vehicle
         </button>
       </div>
