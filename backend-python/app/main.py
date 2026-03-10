@@ -23,14 +23,14 @@ app.add_middleware(
 )
 
 nodes = [
-    {"id": "0", "address": "Moakley Library", "name": "Main Depot", "lat": 42.3568568, "lng": -71.0609706},
-    {"id": str(uuid.uuid4()), "address": "Timothy J. Toomey, Jr. Park", "name": "Customer 1", "lat": 42.3665529, "lng": -71.0807375, "load": 6, "working_time": 41},
-    {"id": str(uuid.uuid4()), "address": "Norbert City", "name": "Customer 6", "lat": 42.36431523548288, "lng": -71.08428955078126, "load": 5, "working_time": 30},
-    {"id": str(uuid.uuid4()), "address": "Norbert City Avenue", "name": "Customer 7", "lat": 42.36529820933543, "lng": -71.08437538146974, "load": 4, "working_time": 20},
-    {"id": str(uuid.uuid4()), "address": "Seaport", "name": "Customer 4", "lat": 42.34465252870443, "lng": -71.06411933898927, "load": 1, "working_time": 10},
-    {"id": str(uuid.uuid4()), "address": "Cambridge Public Library", "name": "Customer 3", "lat": 42.36266634158045, "lng": -71.0987949371338, "load": 2, "working_time": 96},
-    {"id": str(uuid.uuid4()), "address": "Cambridge Center Garage", "name": "Customer 2", "lat": 42.3635614, "lng": -71.0886472, "load": 3, "working_time": 73},
-    {"id": str(uuid.uuid4()), "address": "Albany Street", "name": "Customer 5", "lat": 42.36174674733811, "lng": -71.09310865402223, "load": 3, "working_time": 15},
+    # {"id": "0", "address": "Moakley Library", "name": "Main Depot", "lat": 42.3568568, "lng": -71.0609706},
+    # {"id": str(uuid.uuid4()), "address": "Timothy J. Toomey, Jr. Park", "name": "Customer 1", "lat": 42.3665529, "lng": -71.0807375, "load": 6, "working_time": 41},
+    # {"id": str(uuid.uuid4()), "address": "Norbert City", "name": "Customer 6", "lat": 42.36431523548288, "lng": -71.08428955078126, "load": 5, "working_time": 30},
+    # {"id": str(uuid.uuid4()), "address": "Norbert City Avenue", "name": "Customer 7", "lat": 42.36529820933543, "lng": -71.08437538146974, "load": 4, "working_time": 20},
+    # {"id": str(uuid.uuid4()), "address": "Seaport", "name": "Customer 4", "lat": 42.34465252870443, "lng": -71.06411933898927, "load": 1, "working_time": 10},
+    # {"id": str(uuid.uuid4()), "address": "Cambridge Public Library", "name": "Customer 3", "lat": 42.36266634158045, "lng": -71.0987949371338, "load": 2, "working_time": 96},
+    # {"id": str(uuid.uuid4()), "address": "Cambridge Center Garage", "name": "Customer 2", "lat": 42.3635614, "lng": -71.0886472, "load": 3, "working_time": 73},
+    # {"id": str(uuid.uuid4()), "address": "Albany Street", "name": "Customer 5", "lat": 42.36174674733811, "lng": -71.09310865402223, "load": 3, "working_time": 15},
 ]
 
 stations = [
@@ -42,11 +42,11 @@ stations = [
 ]
 
 vehicles = [
-    {"id": str(uuid.uuid4()), "name": "Vehicle 1", "capacity": 15, "fixed_cost": 50},
-    {"id": str(uuid.uuid4()), "name": "Vehicle 2", "capacity": 2, "fixed_cost": 10},
-    {"id": str(uuid.uuid4()), "name": "Vehicle 3", "capacity": 12, "fixed_cost": 40},
-    {"id": str(uuid.uuid4()), "name": "Vehicle 4", "capacity": 8, "fixed_cost": 10},
-    {"id": str(uuid.uuid4()), "name": "Vehicle 5", "capacity": 4, "fixed_cost": 45},
+    # {"id": str(uuid.uuid4()), "name": "Vehicle 1", "capacity": 15, "fixed_cost": 50},
+    # {"id": str(uuid.uuid4()), "name": "Vehicle 2", "capacity": 2, "fixed_cost": 10},
+    # {"id": str(uuid.uuid4()), "name": "Vehicle 3", "capacity": 12, "fixed_cost": 40},
+    # {"id": str(uuid.uuid4()), "name": "Vehicle 4", "capacity": 8, "fixed_cost": 10},
+    # {"id": str(uuid.uuid4()), "name": "Vehicle 5", "capacity": 4, "fixed_cost": 45},
 ]
 
 # https://thumbs.dreamstime.com/b/depot-glyph-vector-icon-can-easily-edit-modify-depot-glyph-vector-icon-can-easily-edit-modify-279123003.jpg
@@ -98,7 +98,7 @@ def geocode(q: str):
 # Two-Echelon Vehicle Routing Problem (2E-VRP)
 @app.post("/optimize-routes")
 def optimize_routes(data: VRPRequest):
-    node_distance_checker(data.nodes, max_radius_km=50.0)
+    node_distance_checker(data.nodes, max_radius_km=100.0)
     stations = data.stations
     
     # with open('./app/response.json', 'r', encoding='utf-8') as f:
