@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, CircleMarker, Tooltip } from 'react-leaflet';
 import MapController from "./MapController";
 import 'leaflet/dist/leaflet.css';
 
@@ -21,7 +21,7 @@ const deliveryIcon = new L.Icon({
 });
 
 const COLORS = [
-  'blue', 'yellow', 'brown', 'orange', 'purple', 'red', 'pink', 'cyan'
+  'blue', 'red', 'green', 'orange', 'purple', 'yellow', 'pink', 'cyan'
 ];
 
 export default function MapView({ nodes, stations, routes, setNodes }) {
@@ -91,7 +91,6 @@ export default function MapView({ nodes, stations, routes, setNodes }) {
             <Popup>
               <strong>{node.name}</strong><br/>
               {node.address}
-
             </Popup>
           </Marker>
         ) : (
@@ -117,12 +116,13 @@ export default function MapView({ nodes, stations, routes, setNodes }) {
             <Popup>
               <strong>{node.name}</strong><br/>
               {node.address && (
-                <>
-                  {node.address}<br/>
-                </>
+                <>{node.address}<br/></>
               )}
               {node.nearby_node_id && (
                 <>{`(Assigned to EZ Parking ${node.nearby_node_id})`}</>
+              )}
+              {node.load && (
+                <p>Demand: {node.load}</p>
               )}
             </Popup>
           </Marker>
@@ -132,37 +132,50 @@ export default function MapView({ nodes, stations, routes, setNodes }) {
       {/* 3. Dibujar las Rutas de los Vehículos */}
       {routes.map((route, idx) => {
         const routeColor = COLORS[idx % COLORS.length];
+        
         return (
-          <div key={`vehicle-routes-${route.vehicle.id}`}>
-
-            {/* Ruta Principal (Conduciendo) - Línea Sólida */}
-            {route.driving_route?.coords && (
+          <div key={`vehicle-group-${route.vehicle?.id || idx}`}>
+            
+            {/* RUTAS DE CONDUCCIÓN (Segmentadas) */}
+            {route.driving_routes && route.driving_routes.map((segment, sIdx) => (
               <Polyline
-                positions={route.driving_route.coords}
+                key={`driving-seg-${route.vehicle?.id}-${sIdx}`}
+                positions={segment.coords}
                 pathOptions={{
                   color: routeColor,
-                  weight: 5,
-                  opacity: 0.8
+                  weight: 3,
+                  opacity: 1,
+                  lineJoin: 'round'
                 }}
-              />
-            )}
+              >
+                <Popup>
+                  <strong>Section {sIdx + 1}</strong><br />
+                  From: {segment.from_node.name}<br />
+                  To: {segment.to_node.name}<br />
+                  Distance: {(segment.distance / 1000).toFixed(2)} km
+                </Popup>
+              </Polyline>
+            ))}
 
-            {/* Rutas Secundarias (Caminando) - Línea Punteada */}
+            {/* RUTAS CAMINANDO (Línea Punteada) */}
             {route.walking_routes?.map((walkingRoute, wIdx) => (
               <Polyline
-                key={`walking-${route.vehicle.id}-${wIdx}`}
+                key={`walking-${route.vehicle?.id}-${wIdx}`}
                 positions={walkingRoute.coords}
                 pathOptions={{
-                  color: 'black',
-                  weight: 4,
-                  opacity: 0.7,
-                  dashArray: "8, 8"
+                  color: '#444',
+                  weight: 5,
+                  opacity: 1,
+                  dashArray: "5, 10",
+                  lineCap: 'round'
                 }}
-              />
+              >
+                <Tooltip permanent={false}>Customer walk<br/>Distance: {(walkingRoute.distance / 1000).toFixed(2)} km (Round trip)</Tooltip>
+              </Polyline>
             ))}
           </div>
-          );
-        })}
+        );
+      })}
     </MapContainer>
   );
 }

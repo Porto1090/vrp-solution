@@ -10,7 +10,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
   });
 
   const emptyNode = {
-    name: "", address: "", lat: "", lng: ""
+    name: "", address: "", lat: "", lng: "", load: 0, working_time: 0
   };
 
   const emptyVehicle = {
@@ -209,6 +209,28 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
                     />
                   </div>
                 </div>
+                {i !== 0 &&
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Load</label>
+                      <input
+                        type="number"
+                        value={row.load}
+                        onChange={(e)=>updateNode(i,"load",e.target.value)}
+                        className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Working Time (minutes)</label>
+                      <input
+                        type="number"
+                        value={row.working_time}
+                        onChange={(e)=>updateNode(i,"working_time",e.target.value)}
+                        className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                }
 
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 bg-gray-50 p-3 rounded-md border border-gray-100">
                   <div className="flex flex-col items-center md:flex-row gap-2 align-middle w-full md:w-auto">
@@ -276,7 +298,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
                     value={row.name}
                     onChange={(e)=>updateVehicle(i,"name",e.target.value)}
                     className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="e.g. Ford Transit"
+                    placeholder="Vehicle Name"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">

@@ -1,3 +1,6 @@
+from scipy.spatial import KDTree
+import numpy as np
+from sklearn.cluster import KMeans
 from haversine import haversine, Unit
 
 def node_distance_checker(nodes, max_radius_km):
@@ -24,9 +27,7 @@ def prepare_vrp_data(nodes, stations):
     
     station_customers = {}
     
-    depot = nodes[0]
-    depot.id = 0
-    vrp_nodes.append(depot)
+    vrp_nodes.append(nodes[0])
     vrp_demands.append(0)
     
     for node in nodes[1:]:
@@ -37,36 +38,91 @@ def prepare_vrp_data(nodes, stations):
             station_customers[nearby_id].append(node)
         else:
             vrp_nodes.append(node)
-            vrp_demands.append(1)
+            vrp_demands.append(node.load)
 
     for station in stations:
-        if station.id in station_customers and station.id != 0:
-            demanda_estacion = len(station_customers[station.id])
+        if station.id in station_customers:
+            demanda_estacion = sum(c.load for c in station_customers[station.id])            
             vrp_nodes.append(station)
             vrp_demands.append(demanda_estacion)
             
     return vrp_nodes, vrp_demands, station_customers
 
-def determine_nearby_stations(nodes, stations, radius_km=0.25):
+def determine_nearby_stations(nodes, stations, radius_km):
+    if not stations:
+        return nodes
+
+    station_coords = np.array([[s.lat, s.lng] for s in stations])
+    tree = KDTree(station_coords)
+
+    radius_deg = radius_km / 90
+
     for node in nodes:
-        if node.id == 0 or str(node.id) == "0":
+
+        if node.id == "0":
             continue
-            
-        best_station_id = None
-        min_distance = float('inf')
-        
-        for station in stations:
-            coord_node = (node.lat, node.lng)
-            coord_station = (station.lat, station.lng)
-            
-            dist = haversine(coord_node, coord_station, unit=Unit.KILOMETERS)
-            
-            # Buscamos que esté dentro del radio, Y que sea la distancia más corta hasta ahora
-            if dist <= radius_km and dist < min_distance:
-                min_distance = dist
-                best_station_id = station.id
-                
-        # Asignar la mejor estación encontrada (o None si no había ninguna cerca)
-        node.nearby_node_id = best_station_id
+
+        node_coord = [node.lat, node.lng]
+        indices = tree.query_ball_point(node_coord, r=radius_deg)
+
+        if not indices:
+            node.nearby_node_id = None
+            continue
+        best_station = None
+        min_dist = float("inf")
+
+        for idx in indices:
+            station = stations[idx]
+
+            dist = haversine(
+                (node.lat, node.lng),
+                (station.lat, station.lng),
+                unit=Unit.KILOMETERS
+            )
+
+            if dist < min_dist:
+                min_dist = dist
+                best_station = station
+
+        node.nearby_node_id = best_station.id if best_station else None
 
     return nodes
+
+def generate_hubs(nodes, stations, num_hubs, min_station_distance_km=0.1):
+
+    coords = np.array([[n.lat, n.lng] for n in nodes if n.id != "0"])
+
+    kmeans = KMeans(n_clusters=num_hubs)
+    kmeans.fit(coords)
+
+    hubs = []
+
+    for i, center in enumerate(kmeans.cluster_centers_):
+
+        hub_lat = center[0]
+        hub_lng = center[1]
+
+        too_close = False
+
+        for station in stations:
+            dist = haversine(
+                (hub_lat, hub_lng),
+                (station.lat, station.lng),
+                unit=Unit.KILOMETERS
+            )
+
+            if dist < min_station_distance_km:
+                too_close = True
+                break
+
+        if too_close:
+            continue
+
+        hubs.append({
+            "id": f"auto_hub_{i}",
+            "lat": hub_lat,
+            "lng": hub_lng,
+            "name": f"Auto Hub {i}"
+        })
+
+    return hubs

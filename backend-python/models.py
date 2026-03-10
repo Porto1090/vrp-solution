@@ -8,6 +8,8 @@ class Node(BaseModel):
     lat: float
     lng: float
     nearby_node_id: Optional[int] = None
+    load: int = 0
+    working_time: int = 0
 
 class Station(BaseModel):
     id: int
@@ -25,3 +27,4 @@ class VRPRequest(BaseModel):
     nodes: List[Node]
     vehicles: List[Vehicle]
     stations: List[Station]
+    use_auto_hubs: bool = False
