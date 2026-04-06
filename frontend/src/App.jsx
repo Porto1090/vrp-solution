@@ -1,25 +1,56 @@
 import { useEffect, useState } from 'react';
-import { fetchNodes, fetchStations, fetchVehicles, fetchSegmentRoute } from './services/api';
+import { fetchNodes, fetchStations, fetchVehicles, fetchSegmentRoute, fetchBackend } from './services/api';
 import MapView from './components/MapView';
-import RouteStats from './components/RouteStats';
-import LocationForm from './components/LocationForm';
+import Sidebar from './components/Sidebar';
+import LoadingScreen from './components/LoadingScreen';
 
 function App() {
-  const [nodes, setNodes] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
+  const [nodes, setNodes] = useState([
+    { id: "0", name: "Depot", address: "", lat: "", lng: "", load: 0, working_time: 0 }
+  ]);
+  const [vehicles, setVehicles] = useState([
+    { id: "v1", name: "Vehicle 1", capacity: 100, fixed_cost: 50 }
+  ]);
   const [stations, setStations] = useState([]);
-
-  //const [routeData, setRouteData] = useState({"routes":[{"vehicle":{"id":"2a585e9b-7069-4975-ab6a-ce5475574ad5","name":"Vehicle 1","capacity":15,"fixed_cost":50},"driving_routes":[{"from_node":{"id":"0","name":"Main Depot","address":"Moakley Library","lat":42.3568568,"lng":-71.0609706,"nearby_node_id":null,"load":0,"working_time":0},"to_node":{"id":4,"name":"EZ Parking 4","lat":42.3651988,"lng":-71.0831014},"distance":2770.6,"duration":414.9,"coords":[[42.357,-71.06085],[42.35718,-71.06126],[42.35718,-71.06126],[42.35668,-71.06179],[42.35651,-71.06198],[42.35651,-71.06198],[42.35725,-71.06278],[42.35747,-71.063],[42.35772,-71.06321],[42.35772,-71.06321],[42.3579,-71.06275],[42.3579,-71.06275],[42.35798,-71.06271],[42.35803,-71.06271],[42.35863,-71.06286],[42.35867,-71.06287],[42.3588,-71.06289],[42.35901,-71.06289],[42.35906,-71.06289],[42.35937,-71.06287],[42.35937,-71.06287],[42.35943,-71.06292],[42.35946,-71.06304],[42.35944,-71.06336],[42.35943,-71.06356],[42.35943,-71.06356],[42.36034,-71.06363],[42.36117,-71.06372],[42.36117,-71.06372],[42.36129,-71.06377],[42.36129,-71.06377],[42.36127,-71.06438],[42.36126,-71.06476],[42.36124,-71.06512],[42.36124,-71.06553],[42.36124,-71.06577],[42.36124,-71.06633],[42.36123,-71.06662],[42.36124,-71.06685],[42.36123,-71.06697],[42.36123,-71.06741],[42.36121,-71.06825],[42.3612,-71.06873],[42.36118,-71.06936],[42.36117,-71.06996],[42.3612,-71.0701],[42.36135,-71.07044],[42.3614,-71.07062],[42.36141,-71.07079],[42.36138,-71.07118],[42.36134,-71.07155],[42.36134,-71.07186],[42.36139,-71.07293],[42.36187,-71.07925],[42.36187,-71.07935],[42.36191,-71.0798],[42.362,-71.08086],[42.3621,-71.08213],[42.3621,-71.08213],[42.36246,-71.08208],[42.36258,-71.08207],[42.36266,-71.08209],[42.36291,-71.08226],[42.363,-71.08235],[42.36333,-71.08369],[42.36336,-71.08379],[42.36336,-71.08379],[42.36385,-71.08347],[42.36395,-71.08342],[42.36407,-71.08334],[42.36446,-71.08312],[42.36509,-71.08277],[42.36509,-71.08277],[42.36514,-71.08312],[42.36514,-71.08312]]},{"from_node":{"id":4,"name":"EZ Parking 4","lat":42.3651988,"lng":-71.0831014},"to_node":{"id":"0","name":"Main Depot","address":"Moakley Library","lat":42.3568568,"lng":-71.0609706,"nearby_node_id":null,"load":0,"working_time":0},"distance":3091.2,"duration":435.9,"coords":[[42.36514,-71.08312],[42.36509,-71.08277],[42.36509,-71.08277],[42.36446,-71.08312],[42.36407,-71.08334],[42.36395,-71.08342],[42.36385,-71.08347],[42.36336,-71.08379],[42.36329,-71.08384],[42.36314,-71.08395],[42.36281,-71.08421],[42.36265,-71.08441],[42.36265,-71.08441],[42.36228,-71.08382],[42.36218,-71.08356],[42.36206,-71.08302],[42.362,-71.08257],[42.36195,-71.08196],[42.36182,-71.08017],[42.36178,-71.07973],[42.36175,-71.07927],[42.36145,-71.07539],[42.36124,-71.07274],[42.36116,-71.07204],[42.36109,-71.07156],[42.36106,-71.07132],[42.36093,-71.07086],[42.36093,-71.07086],[42.3608,-71.07087],[42.36004,-71.07081],[42.35947,-71.07076],[42.35879,-71.07072],[42.3585,-71.07069],[42.35778,-71.07028],[42.35702,-71.06987],[42.35671,-71.06971],[42.35627,-71.06947],[42.35621,-71.06944],[42.35621,-71.06944],[42.35628,-71.06903],[42.35659,-71.06761],[42.35671,-71.06711],[42.35701,-71.06579],[42.35716,-71.06509],[42.35728,-71.0646],[42.35772,-71.06321],[42.3579,-71.06275],[42.35815,-71.06203],[42.35825,-71.06173],[42.35828,-71.0615],[42.35822,-71.06127],[42.358,-71.06045],[42.358,-71.06045],[42.3578,-71.05973],[42.3577,-71.05936],[42.3577,-71.05936],[42.35714,-71.05987],[42.35673,-71.06024],[42.35681,-71.06043],[42.357,-71.06085],[42.357,-71.06085]]}],"walking_routes":[{"node":{"id":"98e45d9c-ea96-4e9c-87d8-47354498406b","name":"Customer 1","address":"Timothy J. Toomey, Jr. Park","lat":42.3665529,"lng":-71.0807375,"nearby_node_id":4,"load":6,"working_time":41},"coords":[[42.36514,-71.08312],[42.36511,-71.08291],[42.36516,-71.0829],[42.36516,-71.08283],[42.36518,-71.0828],[42.36516,-71.08273],[42.36514,-71.08261],[42.36554,-71.08238],[42.36556,-71.08233],[42.36556,-71.08228],[42.36558,-71.08227],[42.36559,-71.08227],[42.36561,-71.08227],[42.36572,-71.08224],[42.36575,-71.08223],[42.36576,-71.08223],[42.36579,-71.08222],[42.36579,-71.08223],[42.36632,-71.08195],[42.36633,-71.08193],[42.36637,-71.08191],[42.36642,-71.08188],[42.36645,-71.08185],[42.36647,-71.08173],[42.36651,-71.0816],[42.36657,-71.08151],[42.36644,-71.08129],[42.3664,-71.0811],[42.36639,-71.081],[42.3664,-71.08085],[42.36646,-71.08075],[42.36655,-71.08073]],"distance":325.7,"duration":234.5,"station_id":4},{"node":{"id":"f7bee2e3-a5a3-4f7f-ae00-30435578a714","name":"Customer 6","address":"Norbert City","lat":42.36431523548288,"lng":-71.08428955078126,"nearby_node_id":4,"load":5,"working_time":30},"coords":[[42.36514,-71.08312],[42.36511,-71.08291],[42.36507,-71.08292],[42.36506,-71.0829],[42.36503,-71.0829],[42.36449,-71.0832],[42.36441,-71.08325],[42.36404,-71.08346],[42.36396,-71.08351],[42.36396,-71.08355],[42.36428,-71.08432]],"distance":232.1,"duration":167.1,"station_id":4},{"node":{"id":"5ee4618c-5584-4b1a-bbd8-9caf00a24fc9","name":"Customer 7","address":"Norbert City Avenue","lat":42.36529820933543,"lng":-71.08437538146974,"nearby_node_id":4,"load":4,"working_time":20},"coords":[[42.36514,-71.08312],[42.36529,-71.08427],[42.3653,-71.08438]],"distance":105.0,"duration":75.6,"station_id":4}],"stops":[{"id":"0","name":"Main Depot","address":"Moakley Library","lat":42.3568568,"lng":-71.0609706,"nearby_node_id":null,"load":0,"working_time":0},{"id":4,"name":"EZ Parking 4","lat":42.3651988,"lng":-71.0831014},{"id":"0","name":"Main Depot","address":"Moakley Library","lat":42.3568568,"lng":-71.0609706,"nearby_node_id":null,"load":0,"working_time":0}],"total_driving_time":850.8,"total_driving_distance":5861.8,"total_walking_time":477.20000000000005,"total_walking_distance":662.8,"route_load":15},{"vehicle":{"id":"4651280c-1a20-44d7-b183-0f7819edcb47","name":"Vehicle 3","capacity":12,"fixed_cost":40},"driving_routes":[{"from_node":{"id":"0","name":"Main Depot","address":"Moakley Library","lat":42.3568568,"lng":-71.0609706,"nearby_node_id":null,"load":0,"working_time":0},"to_node":{"id":"4da2f57d-180f-4404-98b0-21ca23dae3e4","name":"Customer 4","address":"Seaport","lat":42.34465252870443,"lng":-71.06411933898927,"nearby_node_id":null,"load":1,"working_time":10},"distance":1721.7,"duration":256.7,"coords":[[42.357,-71.06085],[42.35718,-71.06126],[42.35718,-71.06126],[42.35668,-71.06179],[42.35651,-71.06198],[42.35602,-71.06251],[42.35566,-71.06289],[42.35551,-71.06304],[42.35517,-71.06334],[42.35476,-71.06359],[42.35427,-71.06384],[42.35373,-71.0641],[42.35338,-71.06424],[42.35305,-71.06437],[42.35283,-71.06442],[42.35271,-71.06446],[42.35247,-71.06453],[42.35237,-71.06456],[42.35172,-71.06473],[42.35166,-71.06475],[42.35149,-71.06479],[42.35109,-71.06492],[42.35023,-71.06518],[42.3498,-71.06529],[42.34953,-71.06535],[42.34949,-71.06536],[42.34937,-71.06539],[42.34863,-71.06554],[42.34863,-71.06554],[42.3478,-71.06569],[42.34768,-71.06571],[42.34759,-71.06573],[42.34698,-71.06585],[42.3469,-71.06587],[42.3469,-71.06587],[42.34672,-71.06503],[42.34663,-71.0646],[42.34642,-71.0636],[42.34635,-71.06326],[42.34635,-71.06326],[42.34545,-71.06363],[42.34449,-71.06402],[42.34449,-71.06402],[42.34455,-71.06419],[42.34455,-71.06419]]},{"from_node":{"id":"4da2f57d-180f-4404-98b0-21ca23dae3e4","name":"Customer 4","address":"Seaport","lat":42.34465252870443,"lng":-71.06411933898927,"nearby_node_id":null,"load":1,"working_time":10},"to_node":{"id":"7f45e89b-bcd3-43a5-aff8-96fb66b34c23","name":"Customer 3","address":"Cambridge Public Library","lat":42.36266634158045,"lng":-71.0987949371338,"nearby_node_id":null,"load":2,"working_time":96},"distance":4606.5,"duration":582.8,"coords":[[42.34455,-71.06419],[42.34449,-71.06402],[42.34449,-71.06402],[42.34363,-71.06436],[42.34357,-71.06438],[42.34349,-71.06435],[42.34349,-71.06435],[42.34379,-71.06539],[42.34396,-71.06599],[42.34432,-71.06706],[42.34467,-71.06806],[42.34499,-71.06897],[42.34509,-71.06927],[42.34528,-71.06983],[42.34534,-71.07003],[42.34542,-71.07019],[42.34546,-71.07023],[42.34586,-71.07043],[42.34625,-71.07062],[42.34639,-71.07069],[42.34668,-71.07083],[42.34697,-71.07097],[42.34738,-71.07117],[42.34808,-71.07149],[42.34815,-71.07153],[42.34828,-71.07161],[42.34847,-71.0717],[42.34866,-71.07179],[42.34909,-71.072],[42.34953,-71.07221],[42.35043,-71.07266],[42.35077,-71.07282],[42.35125,-71.07306],[42.35166,-71.07325],[42.35206,-71.07345],[42.35244,-71.07363],[42.35287,-71.07384],[42.35321,-71.07401],[42.35364,-71.07422],[42.35403,-71.07441],[42.35442,-71.0746],[42.35481,-71.07479],[42.35481,-71.07479],[42.35533,-71.07505],[42.35533,-71.07505],[42.35539,-71.07512],[42.35542,-71.07519],[42.35545,-71.07533],[42.35517,-71.07666],[42.35513,-71.07697],[42.35458,-71.07896],[42.35428,-71.07987],[42.35243,-71.08667],[42.35233,-71.08708],[42.35228,-71.08737],[42.35217,-71.08831],[42.35217,-71.08831],[42.35202,-71.08879],[42.35192,-71.08906],[42.35172,-71.08959],[42.35171,-71.08971],[42.35173,-71.0898],[42.35176,-71.0899],[42.3518,-71.08995],[42.3518,-71.08995],[42.35193,-71.09002],[42.35506,-71.09155],[42.3568,-71.0924],[42.35699,-71.09251],[42.35703,-71.09253],[42.35711,-71.09257],[42.35716,-71.09259],[42.35729,-71.09266],[42.35733,-71.09265],[42.35737,-71.09265],[42.35748,-71.09268],[42.35765,-71.09276],[42.35779,-71.09289],[42.35819,-71.09308],[42.35864,-71.09331],[42.35904,-71.09357],[42.35927,-71.09376],[42.35957,-71.09407],[42.35969,-71.09422],[42.35976,-71.0943],[42.36015,-71.09488],[42.36032,-71.09516],[42.3605,-71.09545],[42.36052,-71.09549],[42.36068,-71.09575],[42.36083,-71.096],[42.36105,-71.09638],[42.36123,-71.09667],[42.3614,-71.09697],[42.3618,-71.09763],[42.36199,-71.09795],[42.36258,-71.09894],[42.36258,-71.09894],[42.36266,-71.09886],[42.36268,-71.0988],[42.36268,-71.0988]]},{"from_node":{"id":"7f45e89b-bcd3-43a5-aff8-96fb66b34c23","name":"Customer 3","address":"Cambridge Public Library","lat":42.36266634158045,"lng":-71.0987949371338,"nearby_node_id":null,"load":2,"working_time":96},"to_node":{"id":5,"name":"EZ Parking 5","lat":42.3630885,"lng":-71.0913624},"distance":715.7,"duration":104.6,"coords":[[42.36268,-71.0988],[42.36269,-71.09877],[42.36268,-71.09867],[42.36253,-71.09679],[42.36253,-71.09679],[42.36289,-71.09674],[42.36321,-71.09671],[42.36321,-71.09671],[42.36315,-71.09597],[42.36312,-71.09559],[42.3631,-71.09527],[42.36309,-71.09516],[42.36307,-71.09483],[42.36306,-71.09469],[42.36304,-71.09442],[42.36299,-71.09385],[42.36298,-71.09363],[42.36285,-71.092],[42.36281,-71.09135],[42.36281,-71.09135],[42.36308,-71.09131],[42.36308,-71.09131]]},{"from_node":{"id":5,"name":"EZ Parking 5","lat":42.3630885,"lng":-71.0913624},"to_node":{"id":"0","name":"Main Depot","address":"Moakley Library","lat":42.3568568,"lng":-71.0609706,"nearby_node_id":null,"load":0,"working_time":0},"distance":3351.9,"duration":469.3,"coords":[[42.36308,-71.09131],[42.36281,-71.09135],[42.36281,-71.09135],[42.36276,-71.09079],[42.36272,-71.09025],[42.36272,-71.08994],[42.36269,-71.08975],[42.36257,-71.08834],[42.36258,-71.08821],[42.36254,-71.08763],[42.36253,-71.08752],[42.36251,-71.08708],[42.36245,-71.08634],[42.36242,-71.08598],[42.36234,-71.08516],[42.36232,-71.08498],[42.3623,-71.08491],[42.3622,-71.08422],[42.3622,-71.08406],[42.36222,-71.08394],[42.36228,-71.08382],[42.36228,-71.08382],[42.36218,-71.08356],[42.36206,-71.08302],[42.362,-71.08257],[42.36195,-71.08196],[42.36182,-71.08017],[42.36178,-71.07973],[42.36175,-71.07927],[42.36145,-71.07539],[42.36124,-71.07274],[42.36116,-71.07204],[42.36109,-71.07156],[42.36106,-71.07132],[42.36093,-71.07086],[42.36093,-71.07086],[42.3608,-71.07087],[42.36004,-71.07081],[42.35947,-71.07076],[42.35879,-71.07072],[42.3585,-71.07069],[42.35778,-71.07028],[42.35702,-71.06987],[42.35671,-71.06971],[42.35627,-71.06947],[42.35621,-71.06944],[42.35621,-71.06944],[42.35628,-71.06903],[42.35659,-71.06761],[42.35671,-71.06711],[42.35701,-71.06579],[42.35716,-71.06509],[42.35728,-71.0646],[42.35772,-71.06321],[42.3579,-71.06275],[42.35815,-71.06203],[42.35825,-71.06173],[42.35828,-71.0615],[42.35822,-71.06127],[42.358,-71.06045],[42.358,-71.06045],[42.3578,-71.05973],[42.3577,-71.05936],[42.3577,-71.05936],[42.35714,-71.05987],[42.35673,-71.06024],[42.35681,-71.06043],[42.357,-71.06085],[42.357,-71.06085]]}],"walking_routes":[{"node":{"id":"62ce5f9b-f612-47e3-b02c-20ecbacd7254","name":"Customer 2","address":"Cambridge Center Garage","lat":42.3635614,"lng":-71.0886472,"nearby_node_id":5,"load":3,"working_time":73},"coords":[[42.36309,-71.09141],[42.36305,-71.09142],[42.36303,-71.09139],[42.36291,-71.09142],[42.36291,-71.09133],[42.36292,-71.09126],[42.36288,-71.09077],[42.36284,-71.09068],[42.36281,-71.09017],[42.36282,-71.09013],[42.36282,-71.09007],[42.36282,-71.08997],[42.36282,-71.08986],[42.36282,-71.08976],[42.36282,-71.08971],[42.36289,-71.08973],[42.36301,-71.08971],[42.36326,-71.08964],[42.36392,-71.08946],[42.36395,-71.08931],[42.36395,-71.08916],[42.36396,-71.08902],[42.36393,-71.08895],[42.36378,-71.08905],[42.36359,-71.08908],[42.36356,-71.08906],[42.36352,-71.08897]],"distance":385.5,"duration":277.6,"station_id":5},{"node":{"id":"330573cd-adaa-4981-87b8-6ea6f099cb4d","name":"Customer 5","address":"Albany Street","lat":42.36174674733811,"lng":-71.09310865402223,"nearby_node_id":5,"load":3,"working_time":15},"coords":[[42.36309,-71.09141],[42.36305,-71.09142],[42.36303,-71.09139],[42.36291,-71.09142],[42.36291,-71.09145],[42.36286,-71.09146],[42.36281,-71.09146],[42.36276,-71.09146],[42.36273,-71.09147],[42.36276,-71.09179],[42.36244,-71.0924],[42.36242,-71.09245],[42.36231,-71.09267],[42.36197,-71.09339],[42.36172,-71.09316]],"distance":261.5,"duration":188.3,"station_id":5}],"stops":[{"id":"0","name":"Main Depot","address":"Moakley Library","lat":42.3568568,"lng":-71.0609706,"nearby_node_id":null,"load":0,"working_time":0},{"id":"4da2f57d-180f-4404-98b0-21ca23dae3e4","name":"Customer 4","address":"Seaport","lat":42.34465252870443,"lng":-71.06411933898927,"nearby_node_id":null,"load":1,"working_time":10},{"id":"7f45e89b-bcd3-43a5-aff8-96fb66b34c23","name":"Customer 3","address":"Cambridge Public Library","lat":42.36266634158045,"lng":-71.0987949371338,"nearby_node_id":null,"load":2,"working_time":96},{"id":5,"name":"EZ Parking 5","lat":42.3630885,"lng":-71.0913624},{"id":"0","name":"Main Depot","address":"Moakley Library","lat":42.3568568,"lng":-71.0609706,"nearby_node_id":null,"load":0,"working_time":0}],"total_driving_time":1413.4,"total_driving_distance":10395.8,"total_walking_time":465.90000000000003,"total_walking_distance":647.0,"route_load":9}],"nodes":[{"id":"0","name":"Main Depot","address":"Moakley Library","lat":42.3568568,"lng":-71.0609706,"nearby_node_id":null,"load":0,"working_time":0},{"id":"98e45d9c-ea96-4e9c-87d8-47354498406b","name":"Customer 1","address":"Timothy J. Toomey, Jr. Park","lat":42.3665529,"lng":-71.0807375,"nearby_node_id":4,"load":6,"working_time":41},{"id":"f7bee2e3-a5a3-4f7f-ae00-30435578a714","name":"Customer 6","address":"Norbert City","lat":42.36431523548288,"lng":-71.08428955078126,"nearby_node_id":4,"load":5,"working_time":30},{"id":"5ee4618c-5584-4b1a-bbd8-9caf00a24fc9","name":"Customer 7","address":"Norbert City Avenue","lat":42.36529820933543,"lng":-71.08437538146974,"nearby_node_id":4,"load":4,"working_time":20},{"id":"4da2f57d-180f-4404-98b0-21ca23dae3e4","name":"Customer 4","address":"Seaport","lat":42.34465252870443,"lng":-71.06411933898927,"nearby_node_id":null,"load":1,"working_time":10},{"id":"7f45e89b-bcd3-43a5-aff8-96fb66b34c23","name":"Customer 3","address":"Cambridge Public Library","lat":42.36266634158045,"lng":-71.0987949371338,"nearby_node_id":null,"load":2,"working_time":96},{"id":"62ce5f9b-f612-47e3-b02c-20ecbacd7254","name":"Customer 2","address":"Cambridge Center Garage","lat":42.3635614,"lng":-71.0886472,"nearby_node_id":5,"load":3,"working_time":73},{"id":"330573cd-adaa-4981-87b8-6ea6f099cb4d","name":"Customer 5","address":"Albany Street","lat":42.36174674733811,"lng":-71.09310865402223,"nearby_node_id":5,"load":3,"working_time":15}]});
   const [routeData, setRouteData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [backendReady, setBackendReady] = useState(false);
 
   useEffect(() => {
-    const loadData = async () => {
-      fetchNodes().then(setNodes);
-      fetchStations().then(setStations);
-      fetchVehicles().then(setVehicles);
+    let isMounted = true;
+    let timeoutId;
+
+    const waitForBackend = async () => {
+      try {
+        await fetchBackend();
+        
+        if (isMounted) {
+          setBackendReady(true);
+          fetchNodes().then(fetchedData => {
+            if (fetchedData && fetchedData.length > 0) {
+              setNodes(fetchedData);
+            }
+          }).catch(console.error);
+          fetchVehicles().then(fetchedData => {
+            if (fetchedData && fetchedData.length > 0) {
+              setVehicles(fetchedData);
+            }
+          }).catch(console.error);
+          fetchStations().then(setStations).catch(console.error);
+        }
+      } catch (error) {
+        console.warn("Backend unreachable or waking up, retrying in 3 seconds...");
+        if (isMounted) {
+          timeoutId = setTimeout(waitForBackend, 3000);
+        }
+      }
     };
-    loadData();
+
+    waitForBackend();
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const drawRoute = async () => {
@@ -33,7 +64,7 @@ function App() {
     }
 
     const hasIncompleteNodes = nodes.some(
-      n => !n.name?.trim() || !n.address?.trim() || !n.lat || !n.lng
+      n => !n.name?.toString().trim() || !n.address?.toString().trim() || n.lat === "" || n.lat == null || n.lng === "" || n.lng == null
     );
     
     if (hasIncompleteNodes) {
@@ -42,7 +73,7 @@ function App() {
     }
 
     const hasIncompleteVehicles = vehicles.some(
-      v => !v.name?.trim() || v.capacity == null || v.capacity <= 0 || v.fixed_cost == null
+      v => !v.name?.toString().trim() || v.capacity == null || v.capacity <= 0 || v.fixed_cost == null
     );
 
     if (hasIncompleteVehicles) {
@@ -63,71 +94,45 @@ function App() {
     }
   };
 
-   return (
-    <div className="h-screen">
-      {/* LEFT PANEL */}
-      <div className="border p-4 overflow-y-auto">
-        <h1 className="text-2xl font-bold mb-4">
-          VRP - Park and Loop Tool
-        </h1>
-        {!routeData ? (
-        <>
-          {!loading && (
-            <LocationForm
-              nodes={nodes}
-              setNodes={setNodes}
-              vehicles={vehicles}
-              setVehicles={setVehicles}
-            />
-          )}
-          <button
-            onClick={drawRoute}
-            disabled={loading || nodes.length < 2 || vehicles.length === 0}
-            className="mt-8 w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {loading ? "Calculating..." : "Calculate Routes"}
-          </button>
-        </>
-        ) : routeData.routes.length > 0 ? (
-          <RouteStats
-            routes={routeData?.routes || []}
-          />
-        ) : (
-          <div className="mt-4 p-3 rounded border-l-4 border-red-400 bg-red-50 text-red-800">
-            <p className="font-semibold">No routes found</p>
-            <p className="text-sm">
-              We couldn't generate a route with the current nodes and vehicles. Please try again.
-            </p>
-          </div>
-        )}
+  // 1. PANTALLA DE CARGA AISLADA
+  if (!backendReady) {
+    return <LoadingScreen />;
+  }
+
+  // 2. LAYOUT PRINCIPAL
+  return (
+    <div className="flex flex-row h-screen w-screen overflow-hidden bg-white">
+      
+      {/* PANEL IZQUIERDO: Exactamente 2/5 del ancho */}
+      <div className="w-1/2 h-full border-r border-gray-200 p-8 overflow-y-auto">
+        <Sidebar 
+          nodes={nodes}
+          setNodes={setNodes}
+          vehicles={vehicles}
+          setVehicles={setVehicles}
+          routeData={routeData}
+          loading={loading}
+          onCalculate={drawRoute}
+        />
       </div>
 
-      {/* MAP */}
-      <div className="flex-1">
+      {/* PANEL DERECHO (MAPA): Exactamente 3/5 del ancho */}
+      <div className="w-1/2 h-full relative">
         <MapView
-          nodes={routeData?.nodes || nodes}
+          nodes={(routeData?.nodes || nodes).filter(n => n.lat !== "" && n.lng !== "" && !isNaN(n.lat) && !isNaN(n.lng))}
           stations={stations}
           routes={routeData?.routes || []}
           setNodes={setNodes}
         />
+        
+        {/* FOOTER FLOTANTE SOBRE EL MAPA */}
+        <div className="absolute bottom-0 right-0 m-4 bg-white/90 p-2 text-xs text-gray-700 rounded shadow-md z-[1000] pointer-events-none">
+          <p>Developed by: <strong>C. Mora-Quiñones (camimora@mit.edu)</strong> & <strong>E. Porto Morales</strong></p>
+        </div>
       </div>
 
-      <div className="mt-4 p-4 border-t border-gray-200 text-sm text-gray-600 text-left">
-        <p className="mb-2">
-          Developed by:
-        </p>
-          <p>
-            <strong>Camilo A. Mora-Quiñones</strong> &mdash;{" "}
-          <a href="mailto:camimora@mit.edu" className="underline hover:text-gray-800">
-            camimora@mit.edu
-          </a>
-          </p>
-          <p>
-            <strong>Eduardo Agustín Porto Morales</strong>
-          </p>
-      </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

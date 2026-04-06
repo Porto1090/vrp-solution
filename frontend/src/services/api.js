@@ -1,4 +1,11 @@
-  const BASE = import.meta.env.VITE_API_BASE_URL;
+const BASE = import.meta.env.VITE_API_BASE_URL;
+
+// Sistema de "polling" (sondeo)
+export async function fetchBackend() {
+  const res = await fetch(`${BASE}/health`);
+  if (!res.ok) throw new Error('Failed backend');
+  return res.json();
+}
 
 export async function fetchNodes() {
   const res = await fetch(`${BASE}/nodes`);

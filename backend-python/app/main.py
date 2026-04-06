@@ -52,7 +52,7 @@ vehicles = [
 # https://thumbs.dreamstime.com/b/depot-glyph-vector-icon-can-easily-edit-modify-depot-glyph-vector-icon-can-easily-edit-modify-279123003.jpg
 # https://img.freepik.com/premium-vector/parking-pinpoint-icon-blue-location-pin-with-parking-symbol-it-icon-transparent-background_1056423-612.jpg
 
-@app.get("/")
+@app.get("/health")
 def health_check():
     return {"status": "healthy"}
 

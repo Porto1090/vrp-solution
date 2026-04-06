@@ -27,10 +27,10 @@ const COLORS = [
 export default function MapView({ nodes, stations, routes, setNodes }) {
   const center = (nodes && nodes.length && nodes[0]?.lat != null && nodes[0]?.lng != null)
     ? [nodes[0].lat, nodes[0].lng]
-    : [42.36, -71.0805]; // Default to Boston, MA if no valid nodes    
+    : [42.36, -71.0805]; // Default to Cambridge, MA if no valid nodes    
   
   return (
-    <MapContainer center={center} zoom={14} style={{ height: '600px', width: '100%' }}>
+    <MapContainer center={center} zoom={14} style={{ height: '925px', width: '100%' }}>
       <TileLayer
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -51,7 +51,7 @@ export default function MapView({ nodes, stations, routes, setNodes }) {
         return (
           <React.Fragment key={`station-${station.id}`}>
             {stationExists && (
-              <Circle center={[station.lat, station.lng]} pathOptions={{fillColor: 'gray', color: 'black', weight: 1.25, opacity: 0.25}} radius={250} />
+              <Circle center={[station.lat, station.lng]} pathOptions={{fillColor: 'gray', color: 'black', weight: 1.25, opacity: 0.25}} radius={200} />
             )}
             {/* <CircleMarker
               center={[station.lat, station.lng]}
