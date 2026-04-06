@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import LoadingScreen from './components/LoadingScreen';
 
 function App() {
+  const [origin, setOrigin] = useState([42.36, -71.0805]); // Default to Cambridge, MA if no valid nodes    
   const [nodes, setNodes] = useState([
     { id: "0", name: "Depot", address: "", lat: "", lng: "", load: 0, working_time: 0 }
   ]);
@@ -106,6 +107,7 @@ function App() {
       {/* PANEL IZQUIERDO: Exactamente 2/5 del ancho */}
       <div className="w-1/2 h-full border-r border-gray-200 p-8 overflow-y-auto">
         <Sidebar 
+          setOrigin={setOrigin}
           nodes={nodes}
           setNodes={setNodes}
           vehicles={vehicles}
@@ -119,6 +121,7 @@ function App() {
       {/* PANEL DERECHO (MAPA): Exactamente 3/5 del ancho */}
       <div className="w-1/2 h-full relative">
         <MapView
+          origin={origin}
           nodes={(routeData?.nodes || nodes).filter(n => n.lat !== "" && n.lng !== "" && !isNaN(n.lat) && !isNaN(n.lng))}
           stations={stations}
           routes={routeData?.routes || []}
@@ -127,7 +130,7 @@ function App() {
         
         {/* FOOTER FLOTANTE SOBRE EL MAPA */}
         <div className="absolute bottom-0 right-0 m-4 bg-white/90 p-2 text-xs text-gray-700 rounded shadow-md z-[1000] pointer-events-none">
-          <p>Developed by: <strong>C. Mora-Quiñones (camimora@mit.edu)</strong> & <strong>E. Porto Morales</strong></p>
+          <p>Dev by: <strong>Camilo A. Mora-Quiñones (camimora@mit.edu)</strong> & <strong>Eduardo Porto Morales (eduardo12porto@gmail.com)</strong></p>
         </div>
       </div>
 

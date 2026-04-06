@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
-import { Truck, Footprints, Package } from 'lucide-react';
+import { Truck, Footprints, Package, AlertTriangle, MapPinOff } from 'lucide-react';
+import { generateCSV } from '../services/downloadcsv';
 
-export default function RouteStats({ routes }) {
+export default function RouteStats({ routes, nodes }) {
+  console.log("RouteStats received nodes:", routes);
   const START_TIME_SECONDS = 6 * 3600; 
   const formatDuration = (totalSeconds) => {
     if (!totalSeconds) return "00:00";
@@ -20,8 +22,25 @@ export default function RouteStats({ routes }) {
     return `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   };
 
-  const enrichedRoutes = useMemo(() => {
-    return routes.map((route) => {
+  const downloadNodesGenerated = () => {
+    const headers = ["name", "address", "lat", "lng", "load", "working_time"];
+    const formattedNodes = nodes.map(node => [
+      node.name || "",
+      node.address || "",
+      node.lat !== undefined && node.lat !== null ? String(node.lat) : "",
+      node.lng !== undefined && node.lng !== null ? String(node.lng) : "",
+      String(node.load || 0),
+      String(node.working_time || 0)
+    ]);
+
+    generateCSV(headers, formattedNodes, "nodes_generated.csv");
+  };
+
+  const { enrichedRoutes, unassignedNodes } = useMemo(() => {
+    const visitedNodeIds = new Set();
+
+    // 1. Enriquecer las rutas y recolectar IDs visitados
+    const processedRoutes = routes.map((route) => {
       let currentTime = START_TIME_SECONDS;
       let currentDistance = 0;
 
@@ -31,6 +50,8 @@ export default function RouteStats({ routes }) {
         const isHub = stop.name?.toLowerCase().includes('parking');
         const walks = route.walking_routes?.filter(wr => wr.station_id === stop.id) || [];
 
+        visitedNodeIds.add(String(stop.id));
+        
         // 1. Sumar tiempo y distancia de conducción para LLEGAR a esta parada
         let segmentDistance = 0;
         let segmentDuration = 0;
@@ -49,6 +70,8 @@ export default function RouteStats({ routes }) {
         if (isHub) {
           // Si es un HUB, el vehículo espera mientras se hacen las rutas a pie (Ida y Vuelta)
           walks.forEach(walk => {
+            if (walk.node_id) visitedNodeIds.add(String(walk.node_id));
+
             const walkArrival = currentTime + walk.duration;
             const walkWorkTime = (walk.node?.working_time || 0) * 60;
             const walkDeparture = walkArrival + walkWorkTime;
@@ -87,7 +110,64 @@ export default function RouteStats({ routes }) {
 
       return { ...route, enrichedStops };
     });
-  }, [routes]);
+
+    // 2. Create nodes_id_map from nodes prop (SIN HOOKS ANIDADOS)
+    const nodes_id_map = {};
+    nodes.forEach(node => {
+      nodes_id_map[node.id] = node;
+    });
+
+    // 3. Determine unvisited nodes
+    const missingNodes = [];
+    if (nodes_id_map) {
+      Object.keys(nodes_id_map).forEach(nodeId => {
+        if (nodeId !== "0" && !visitedNodeIds.has(String(nodeId))) {
+          missingNodes.push(nodes_id_map[nodeId]);
+        }
+      });
+    }
+
+    console.log("Enriched Routes:", processedRoutes);
+    return { 
+      enrichedRoutes: processedRoutes, 
+      unassignedNodes: missingNodes 
+    };
+  }, [routes, nodes]);
+
+  const openInGoogleMaps = (route) => {
+    // Usamos las paradas principales (conducción)
+    const stops = route.stops;
+    if (!stops || stops.length < 2) {
+      alert("Not enough stops to generate a route.");
+      return;
+    }
+
+    // El origen es el primer nodo (Depot)
+    const origin = `${stops[0].lat},${stops[0].lng}`;
+    // El destino es el último nodo (Regreso al Depot)
+    const destination = `${stops[stops.length - 1].lat},${stops[stops.length - 1].lng}`;
+
+    // Extraemos los nodos intermedios para los waypoints
+    const intermediateStops = stops.slice(1, -1);
+    
+    // Google Maps estándar permite un máximo de 9-10 waypoints en su URL gratuita.
+    // Si tienes más, es buena práctica advertir al usuario, aunque enviaremos todos.
+    if (intermediateStops.length > 9) {
+      alert("Note: Google Maps may truncate routes with more than 9 intermediate stops. The first 9 will be shown perfectly.");
+    }
+
+    const waypoints = intermediateStops.map(stop => `${stop.lat},${stop.lng}`).join('|');
+
+    // Construimos la URL de Google Maps Directions
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+
+    if (waypoints) {
+      url += `&waypoints=${encodeURIComponent(waypoints)}`;
+    }
+
+    // Abrimos en una nueva pestaña o en la app nativa de Google Maps
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="space-y-8 pb-10">
@@ -102,9 +182,19 @@ export default function RouteStats({ routes }) {
               </h2>
               <p className="text-xs opacity-75">ID: {route.vehicle.id}</p>
             </div>
-            <div className="text-right">
-              <span className="text-xs uppercase block opacity-75">Total Load</span>
-              <span className="text-xl font-mono font-bold text-yellow-400">{route.route_load}</span><span className="text-xl font-mono font-semibold text-gray-300">/{route.vehicle.capacity}</span>
+            <div className="flex flex-row text-right gap-4 items-center">
+              <button 
+                onClick={() => openInGoogleMaps(route)}
+                title="Open driving route in Google Maps"
+                className='bg-blue-500 hover:bg-blue-600 text-white p-2 rounded font-medium shadow-sm transition-colors flex items-center gap-2'
+              >
+                <p className='text-sm uppercase tracking-wider text-white font-bold'>MAPS</p>
+                <img src="/images/delivery.png" alt="Ver en Google Maps" className='w-8 h-8'/>
+              </button>
+              <div>
+                <span className="text-xs uppercase block opacity-75">Total Load</span>
+                <span className="text-xl font-mono font-bold text-yellow-400">{route.route_load}</span><span className="text-xl font-mono font-semibold text-gray-300">/{route.vehicle.capacity}</span>
+              </div>
             </div>
           </div>
           
@@ -257,7 +347,47 @@ export default function RouteStats({ routes }) {
             </table>
           </div>
         </div>
-      )
+      )      
     )}
+    
+    {/* Tarjeta de Nodos No Visitados (Unreachable / Unassigned Nodes) */}
+      {unassignedNodes.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md overflow-hidden border border-red-200">
+          <div className="bg-red-50 p-4 border-b border-red-100 flex items-center gap-3">
+            <div className="p-2 bg-red-100 text-red-600 rounded-full">
+              <AlertTriangle size={20} />
+            </div>
+            <div>
+              <h3 className="text-red-800 font-bold text-lg">Unassigned Nodes ({unassignedNodes.length})</h3>
+              <p className="text-red-600 text-sm">
+                These nodes could not be integrated into any route, likely due to capacity or reachability constraints.
+              </p>
+            </div>
+          </div>
+          
+          <div className="divide-y divide-red-100">
+            {unassignedNodes.map(node => (
+              <div key={`unassigned-${node.id}`} className="p-4 flex items-start gap-3 hover:bg-red-50/50 transition-colors">
+                <MapPinOff size={18} className="text-red-400 mt-1 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <strong className="text-gray-800">{node.name}</strong>
+                    <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded font-semibold whitespace-nowrap ml-2 flex items-center gap-1">
+                      <Package size={12}/> Load: {node.load || 0}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">{node.address}</div>
+                  {node.working_time > 0 && (
+                     <div className="text-xs text-gray-400 mt-1 font-mono">Service Time: {node.working_time} min</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <button onClick={downloadNodesGenerated} className="text-md bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded font-medium shadow-sm transition-colors">
+        Download Generated Nodes
+      </button>
   </div>
 )};

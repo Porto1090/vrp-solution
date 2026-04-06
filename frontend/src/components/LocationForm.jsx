@@ -3,7 +3,22 @@ import { useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export default function LocationForm({ nodes, setNodes, vehicles, setVehicles }) {
+// Lista de ciudades predefinidas con sus coordenadas
+const PRESET_LOCATIONS = [
+  { name: "Cambridge, MA", city: "Cambridge", country: "United States", lat: 42.3601, lng: -71.0805 },
+  { name: "Mexico City", city: "Mexico City", country: "Mexico", lat: 19.4326, lng: -99.1332 },
+  { name: "Madrid", city: "Madrid", country: "Spain", lat: 40.4168, lng: -3.7038 },
+  { name: "Buenos Aires", city: "Buenos Aires", country: "Argentina", lat: -34.6037, lng: -58.3816 },
+  { name: "Sao Paulo", city: "Sao Paulo", country: "Brazil", lat: -23.5505, lng: -46.6333 },
+  { name: "Lima", city: "Lima", country: "Peru", lat: -12.0464, lng: -77.0428 },
+  { name: "Bogota", city: "Bogota", country: "Colombia", lat: 4.7110, lng: -74.0721 },
+  { name: "Santiago", city: "Santiago", country: "Chile", lat: -33.4489, lng: -70.6693 },
+  { name: "Quito", city: "Quito", country: "Ecuador", lat: -0.1807, lng: -78.4678 },
+  { name: "Caracas", city: "Caracas", country: "Venezuela", lat: 10.4806, lng: -66.9036 }
+];
+
+export default function LocationForm({ setOrigin, nodes, setNodes, vehicles, setVehicles }) {
+
   const [geocodeErrors, setGeocodeErrors] = useState({});
   const [locationSpecs, setLocationSpecs] = useState({
     city: "Cambridge",
@@ -109,10 +124,31 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
         )}
 
         <div className="flex flex-col gap-3 bg-gray-50 p-3 rounded-md border border-gray-100">
-          <span className="text-xs font-bold uppercase text-gray-500">Search Filters (Geocoding)</span>
+          <span className="text-xs font-bold uppercase text-gray-500">Working Region (Map & Geocoding)</span>
+          
+          {/* Nuevo Dropdown para centrar el mapa rápido */}
+          <div className="flex flex-col mb-1">
+            <label className="block text-xs text-gray-500 mb-1">Quick Jump to Region</label>
+            <select
+              onChange={(e) => {
+                const loc = PRESET_LOCATIONS.find(l => l.name === e.target.value);
+                if (loc) {
+                  setOrigin([loc.lat, loc.lng]); // Mueve el mapa visualmente al instante
+                  setLocationSpecs({ city: loc.city, country: loc.country }); // Prepara el geocoder
+                }
+              }}
+              className="border border-gray-300 rounded-md p-2 w-full text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
+            >
+              <option value="">-- Select a starting region --</option>
+              {PRESET_LOCATIONS.map(loc => (
+                <option key={loc.name} value={loc.name}>{loc.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col">
-              <label className="block text-xs text-gray-500 mb-1">City</label>
+              <label className="block text-xs text-gray-500 mb-1">City (Manual override)</label>
               <input
                 value={locationSpecs.city}
                 onChange={(e) => setLocationSpecs({ ...locationSpecs, city: e.target.value })}
@@ -121,7 +157,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
               />
             </div>
             <div className="flex flex-col">
-              <label className="block text-xs text-gray-500 mb-1">Country</label>
+              <label className="block text-xs text-gray-500 mb-1">Country (Manual override)</label>
               <input
                 value={locationSpecs.country}
                 onChange={(e) => setLocationSpecs({ ...locationSpecs, country: e.target.value })}
@@ -134,7 +170,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
         <div className="space-y-4">
           {nodes.map((row, i) => (
-            <div key={row.id || i} className={`bg-white border border-gray-200 rounded-lg p-4 shadow-sm transition-all ${i === 0 ? 'border-l-4 border-l-blue-500' : ''}`}>
+            <div key={row.id || i} className={`bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm transition-all ${i === 0 ? 'border-l-4 border-l-blue-500' : ''}`}>
               <div className="flex justify-between items-center mb-3">
                 <span className={`text-xs font-bold uppercase ${i === 0 ? 'text-blue-600' : 'text-gray-500'}`}>
                   {i === 0 ? '📍 Start Point (Depot)' : `👤 Customer ${i}`}
@@ -192,7 +228,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
                   </div>
                 )}
 
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 bg-gray-50 p-3 rounded-md border border-gray-100">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 bg-gray-200 p-3 rounded-md border border-gray-100">
                   <div className="flex flex-col items-center md:flex-row gap-2 align-middle w-full md:w-auto">
                     {(!row.lat || !row.lng) ? (
                       <button 
@@ -237,7 +273,7 @@ export default function LocationForm({ nodes, setNodes, vehicles, setVehicles })
 
         <div className="space-y-4">
           {vehicles.map((row, i) => (
-            <div key={row.id || i} className="relative bg-white border border-gray-200 rounded-lg p-4 shadow-sm transition-colors">
+            <div key={row.id || i} className="relative bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm transition-colors">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-bold text-gray-500 uppercase">🚚 Vehicle {i + 1}</span>
                 {vehicles.length > 1 && (

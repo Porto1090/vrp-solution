@@ -15,19 +15,19 @@ const hubIcon = new L.Icon({
   iconSize: [35, 35],
 });
 
-const deliveryIcon = new L.Icon({
-  iconUrl: "/images/delivery.png",
-  iconSize: [35, 35],
+const grocerystoreIcon = new L.Icon({
+  iconUrl: "/images/grocerystore.png",
+  iconSize: [30, 30],
 });
 
 const COLORS = [
   'blue', 'red', 'green', 'orange', 'purple', 'yellow', 'pink', 'cyan'
 ];
 
-export default function MapView({ nodes, stations, routes, setNodes }) {
+export default function MapView({ origin, nodes, stations, routes, setNodes }) {
   const center = (nodes && nodes.length && nodes[0]?.lat != null && nodes[0]?.lng != null)
     ? [nodes[0].lat, nodes[0].lng]
-    : [42.36, -71.0805]; // Default to Cambridge, MA if no valid nodes    
+    : origin;
   
   return (
     <MapContainer center={center} zoom={14} style={{ height: '925px', width: '100%' }}>
@@ -98,7 +98,7 @@ export default function MapView({ nodes, stations, routes, setNodes }) {
           <Marker 
             key={`node-${node.id}`} 
             position={[node.lat, node.lng]}
-            icon={deliveryIcon}
+            icon={grocerystoreIcon}
             draggable={true}
             eventHandlers={{
               dragend: (e) => {
