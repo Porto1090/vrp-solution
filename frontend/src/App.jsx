@@ -3,6 +3,7 @@ import { fetchNodes, fetchStations, fetchVehicles, fetchSegmentRoute, fetchBacke
 import MapView from './components/MapView';
 import Sidebar from './components/Sidebar';
 import LoadingScreen from './components/LoadingScreen';
+import { v4 as uuidv4 } from 'uuid';
 
 function App() {
   const [origin, setOrigin] = useState([42.36, -71.0805]); // Default to Cambridge, MA if no valid nodes    
@@ -10,7 +11,7 @@ function App() {
     { id: "0", name: "Depot", address: "", lat: "", lng: "", load: 0, working_time: 0 }
   ]);
   const [vehicles, setVehicles] = useState([
-    { id: "v1", name: "Vehicle 1", capacity: 100, fixed_cost: 50 }
+    { id: uuidv4(), name: "Vehicle 1", capacity: 100, fixed_cost: 50 }
   ]);
   const [stations, setStations] = useState([]);
   const [routeData, setRouteData] = useState(null);
@@ -113,6 +114,7 @@ function App() {
           vehicles={vehicles}
           setVehicles={setVehicles}
           routeData={routeData}
+          setRouteData={setRouteData}
           loading={loading}
           onCalculate={drawRoute}
         />

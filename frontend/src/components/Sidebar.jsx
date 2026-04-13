@@ -2,6 +2,7 @@ import React, { useRef, useMemo } from 'react';
 import LocationForm from './LocationForm';
 import RouteStats from './RouteStats';
 import { generateCSV } from '../services/downloadcsv';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Sidebar({ 
   setOrigin,
@@ -9,7 +10,8 @@ export default function Sidebar({
   setNodes, 
   vehicles, 
   setVehicles, 
-  routeData, 
+  routeData,
+  setRouteData,
   loading, 
   onCalculate 
 }) {
@@ -119,6 +121,10 @@ export default function Sidebar({
     reader.readAsText(file);
   };
 
+  const onReturnToHome = () => {
+    setRouteData(null);
+  };
+
   return (
     <div className="min-h-full flex flex-col"> 
       <div className='flex flex-row items-center justify-between mb-6'>
@@ -130,7 +136,17 @@ export default function Sidebar({
             Democratizing Urban Logistics
           </h2>
         </div>
-        
+
+        {/* RETURN TO HOME BUTTON */}
+        {routeData && (
+          <button
+            onClick={onReturnToHome}
+            className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-2 rounded border border-gray-300 font-medium transition-colors"
+          >
+            Return to Home
+          </button>
+        )}
+
         {/* BOTONES DE IMPORTACIÓN/EXPORTACIÓN */}
         {!routeData && !loading && (
           <div className="flex flex-col gap-2">

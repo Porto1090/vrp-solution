@@ -3,7 +3,6 @@ import { Truck, Footprints, Package, AlertTriangle, MapPinOff } from 'lucide-rea
 import { generateCSV } from '../services/downloadcsv';
 
 export default function RouteStats({ routes, nodes }) {
-  console.log("RouteStats received nodes:", routes);
   const START_TIME_SECONDS = 6 * 3600; 
   const formatDuration = (totalSeconds) => {
     if (!totalSeconds) return "00:00";
@@ -70,7 +69,7 @@ export default function RouteStats({ routes, nodes }) {
         if (isHub) {
           // Si es un HUB, el vehículo espera mientras se hacen las rutas a pie (Ida y Vuelta)
           walks.forEach(walk => {
-            if (walk.node_id) visitedNodeIds.add(String(walk.node_id));
+            if (walk.node?.id) visitedNodeIds.add(String(walk.node.id));
 
             const walkArrival = currentTime + walk.duration;
             const walkWorkTime = (walk.node?.working_time || 0) * 60;
@@ -127,7 +126,6 @@ export default function RouteStats({ routes, nodes }) {
       });
     }
 
-    console.log("Enriched Routes:", processedRoutes);
     return { 
       enrichedRoutes: processedRoutes, 
       unassignedNodes: missingNodes 
@@ -150,15 +148,13 @@ export default function RouteStats({ routes, nodes }) {
     // Extraemos los nodos intermedios para los waypoints
     const intermediateStops = stops.slice(1, -1);
     
-    // Google Maps estándar permite un máximo de 9-10 waypoints en su URL gratuita.
-    // Si tienes más, es buena práctica advertir al usuario, aunque enviaremos todos.
     if (intermediateStops.length > 9) {
       alert("Note: Google Maps may truncate routes with more than 9 intermediate stops. The first 9 will be shown perfectly.");
     }
 
     const waypoints = intermediateStops.map(stop => `${stop.lat},${stop.lng}`).join('|');
 
-    // Construimos la URL de Google Maps Directions
+    // Corrección de la URL de Google Maps
     let url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
 
     if (waypoints) {
@@ -167,6 +163,57 @@ export default function RouteStats({ routes, nodes }) {
 
     // Abrimos en una nueva pestaña o en la app nativa de Google Maps
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  // Función añadida para exportar la tabla visible
+  const downloadTableGenerated = () => {
+    const headers = [
+      "Vehicle", "Stop #", "Type", "Location Name", 
+      "Accum. Dist. (km)", "Load", "Transp. Duration", 
+      "Arrival", "Departure", "Service Time"
+    ];
+    
+    const rows = [];
+    
+    enrichedRoutes.forEach((route) => {
+      const vehicleName = route.vehicle.name || `Vehicle ${route.vehicle.id}`;
+      
+      route.enrichedStops.forEach((stop, idx) => {
+        // Fila principal de la parada
+        const type = stop.isDepot ? 'DEPOT' : stop.isHub ? 'HUB' : 'STOP';
+        const dist = (stop.accumulatedDistance / 1000).toFixed(2);
+        const load = stop.load || "0";
+        const duration = idx === 0 ? '--' : formatDuration(stop.segmentDuration);
+        const arrival = idx === 0 ? '--' : formatClock(stop.arrivalTime);
+        const departure = idx === route.enrichedStops.length - 1 ? '--' : formatClock(stop.departureTime);
+        const serviceTime = (!stop.isDepot && !stop.isHub) ? formatDuration((stop.working_time || 0) * 60) : '--';
+        
+        rows.push([
+          vehicleName, String(idx), type, stop.name || "Unknown", 
+          dist, String(load), duration, arrival, departure, serviceTime
+        ]);
+        
+        // Si hay caminatas anidadas (HUB), agregarlas a la tabla
+        if (stop.isHub && stop.enrichedWalks) {
+          stop.enrichedWalks.forEach((walk) => {
+            rows.push([
+              vehicleName, 
+              "↳", 
+              "WALKING", 
+              walk.node?.name || "Unknown",
+              `+ ${(walk.distance / 1000).toFixed(2)} (x2)`,
+              String(walk.node?.load || "0"),
+              formatDuration(walk.duration),
+              formatClock(walk.arrivalTime),
+              formatClock(walk.departureTime),
+              formatDuration((walk.node?.working_time || 0) * 60)
+            ]);
+          });
+        }
+      });
+    });
+    
+    generateCSV(headers, rows, "routing_results_table.csv");
   };
 
   return (
@@ -210,13 +257,13 @@ export default function RouteStats({ routes, nodes }) {
                 <div className="flex gap-4 mt-1">
                   <div>
                     <span className="text-lg font-bold text-gray-800">
-                      {(route.total_driving_distance / 1000).toFixed(2)}
+                      ~{(route.total_driving_distance / 1000).toFixed(2)}
                     </span>
                     <span className="text-xs text-gray-500 ml-1">km</span>
                   </div>
                   <div className="border-l border-gray-300 pl-4">
                     <span className="text-lg font-bold text-gray-800">
-                      {formatDuration(route.total_driving_time)}
+                      ~{formatDuration(route.total_driving_time)}
                     </span>
                   </div>
                 </div>
@@ -234,13 +281,13 @@ export default function RouteStats({ routes, nodes }) {
                   <div className="flex gap-4 mt-1">
                     <div>
                       <span className="text-lg font-bold text-gray-800">
-                        {(route.total_walking_distance*2 / 1000).toFixed(2)}
+                        ~{(route.total_walking_distance*2 / 1000).toFixed(2)}
                       </span>
                       <span className="text-xs text-gray-500 ml-1">km</span>
                     </div>
                     <div className="border-l border-gray-300 pl-4">
                       <span className="text-lg font-bold text-gray-800">
-                        {formatDuration(route.total_walking_time*2)}
+                        ~{formatDuration(route.total_walking_time*2)}
                       </span>
                     </div>
                   </div>
@@ -386,8 +433,21 @@ export default function RouteStats({ routes, nodes }) {
           </div>
         </div>
       )}
-      <button onClick={downloadNodesGenerated} className="text-md bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded font-medium shadow-sm transition-colors">
-        Download Generated Nodes
-      </button>
+      
+      {/* Botones de exportación mejorados visualmente */}
+      <div className="flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-6 border-t border-gray-200">
+        <button 
+          onClick={downloadNodesGenerated} 
+          className="flex items-center justify-center gap-2 text-sm bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-2.5 px-5 rounded-lg font-bold shadow-sm transition-all"
+        >
+          <Package size={18} /> Export Raw Nodes
+        </button>
+        <button 
+          onClick={downloadTableGenerated} 
+          className="flex items-center justify-center gap-2 text-sm bg-gray-900 hover:bg-gray-800 text-white py-2.5 px-5 rounded-lg font-bold shadow-md transition-all"
+        >
+          <Truck size={18} /> Export Routing Table
+        </button>
+      </div>
   </div>
 )};
