@@ -1,20 +1,12 @@
-# vrp-solution
+# VRP Solution
+## Two-Echelon Urban Delivery Optimizer
 
-# TODO 
+VRP Solution is a full-stack optimization system for solving Two-Echelon Vehicle Routing Problems (2E-VRP) in urban delivery environments.
 
-- [X] LOAD
-- [X] WORKING TIME
-- [X] RUTAS PARTICULARES (DISTANCIA/TIEMPO)
-- [X] ARREGLAR TABLA TIEMPOS DISTANCIAS
-- [X] POLYLINE
-- [X] CSV
-- [X] ESPERAR A EL BACKEND PARA MOSTRAR TODO
-- [X] TITULO DE LA PAGINA (EZ PARKING)
-- [X] ICONO COMERCIO
-- [X] DEVELOPED BY
-- [X] DOBLE CSV (VEHICULOS Y NODOS)
-- [X] MOSTRAR NODOS QUE NO SE PUDIERON ASIGNAR
-- [-] DESCARGAR RESULTADOS
-- [ ] VER LAS RUTAS EN LA REALIDAD (GOOGLE MAPS)
-- [ ] GUARDAR DATOS EN BASE DE DATOS
-- [X] MOVERSE POR PAISES
+The system models scenarios where vehicles travel from a central depot to intermediate parking hubs, while couriers perform the final delivery segment on foot. It combines mathematical optimization, real-world road networks, automatic hub generation, and interactive route visualization.
+
+## Documentation
+
+- The complete documentation, including installation instructions, architecture, configuration, API reference, and usage guides, is available at:
+
+[VRP Solution Documentation](https://mintlify.wiki/Porto1090/vrp-solution)
